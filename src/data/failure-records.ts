@@ -9,132 +9,50 @@ export interface FailureRecord {
   title: string
   description?: string
   citations: Citation[]
-  hasAgencyChart?: boolean
 }
 
 export const failureRecords: FailureRecord[] = [
   {
-    ref: 'MON-SYS',
-    title: 'The Monetary System',
-    citations: [
-      {
-        icon: 'landmark',
-        text: 'GAO-11-696: Federal Reserve System: Opportunities Exist to Strengthen Policies and Processes for Managing Emergency Assistance (Audit of Emergency Lending)',
-      },
-      {
-        icon: 'scroll-text',
-        text: 'Executive Order 6102: Requiring Gold Coin, Gold Bullion and Gold Certificates to Be Delivered to the Government (April 5, 1933)',
-      },
-      {
-        icon: 'file-text',
-        text: 'Public Law 93-110: Formal Decoupling of the U.S. Dollar from the International Gold Standard (1973)',
-      },
-    ],
-  },
-  {
-    ref: 'PROP-SOV',
-    title: 'Property & Sovereignty',
-    citations: [
-      {
-        icon: 'gavel',
-        text: 'Supreme Court of the United States: Kelo v. City of New London, 545 U.S. 469 (Eminent Domain Power Expansion)',
-      },
-      {
-        icon: 'bar-chart',
-        text: 'DOJ: Annual Assets Forfeiture Fund Reports to Congress (Fiscal Year Statistics on Civil Asset Forfeiture)',
-      },
-      {
-        icon: 'file-text',
-        text: "OIG-DOJ: Audit of the Department of Justice's Use of Equitable Sharing and Asset Forfeiture",
-      },
-    ],
-  },
-  {
-    ref: 'PUB-HEALTH',
-    title: 'Public Health & Ethics',
-    citations: [
-      {
-        icon: 'stethoscope',
-        text: 'CDC/NARA: Final Report of the Tuskegee Syphilis Study Ad Hoc Advisory Panel (Declassified)',
-      },
-      {
-        icon: 'flask-conical',
-        text: 'U.S. Army: Declassified Technical Report on Operation Sea-Spray (Biological Testing over San Francisco Bay)',
-      },
-      {
-        icon: 'file-text',
-        text: 'Senate Subcommittee on Health and Scientific Research: Human Drug Testing by the CIA (MKUltra Supplemental)',
-      },
-    ],
-  },
-  {
-    ref: 'ADMIN-STATE',
-    title: 'The Bureaucracy',
-    hasAgencyChart: true,
-    citations: [
-      {
-        icon: 'archive',
-        text: 'NARA: Comprehensive List of Departments and Agencies within the United States Government Manual',
-      },
-      {
-        icon: 'bar-chart',
-        text: 'Office of Personnel Management: Federal Workforce Size and Agency Proliferation Data (1940-Present)',
-      },
-    ],
-  },
-  {
-    ref: 'CONST-OVER',
+    ref: 'How the Constitution Gets Bent',
     title: 'Constitutional Overreach',
     citations: [
       {
         icon: 'gavel',
         text: 'Supreme Court of the United States: Wickard v. Filburn, 317 U.S. 111 (Expansion of Commerce Clause to Non-Commercial Activity)',
+        href: 'https://supreme.justia.com/cases/federal/us/317/111/',
       },
       {
         icon: 'file-text',
-        text: 'Congressional Research Service: The Commerce Clause: Limits on Congressional Power and Recent Jurisprudence',
+        text: 'Congressional Research Service: Federalism-Based Limitations on Congressional Power: An Overview',
+        href: 'https://crsreports.congress.gov/product/pdf/R/R45323',
       },
       {
         icon: 'clipboard-list',
         text: 'GAO: Review of Administrative Rulemaking and Authority Expansion under Chevron Deference',
+        href: 'https://www.gao.gov/legal/other-legal-work/congressional-review-act',
       },
     ],
   },
   {
-    ref: 'CIA-OPS',
-    title: 'Intelligence Operations',
-    citations: [
-      {
-        icon: 'file-text',
-        text: "Senate Select Committee: Project MKUltra, The CIA's Program of Research in Behavioral Modification (1977)",
-      },
-      {
-        icon: 'file-text',
-        text: 'National Archives: Records of the Office of Strategic Services (Operation Paperclip)',
-      },
-      {
-        icon: 'file-text',
-        text: 'JCS: Justification for US Military Intervention in Cuba (Operation Northwoods Declassified)',
-      },
-    ],
-  },
-  {
-    ref: 'LEG-SCALE',
+    ref: 'How Many Laws Is Too Many?',
     title: 'Legislative Complexity',
     description:
-      'The US Code and CFR exceed 150 million words. Total compliance is statistically impossible for any individual or entity.',
+      'The US Code and CFR exceed 150 million words — that\'s 150 times the entire Harry Potter series (1,084,170 words). At an average reading speed of 250 words per minute, reading the federal code alone would take over 11 years of nonstop, 24/7 reading. By the time you finished, thousands of new rules would have been added, old ones rewritten, and entire sections made redundant. Total compliance isn\'t just unlikely — it\'s structurally impossible.',
     citations: [
       {
         icon: 'bar-chart',
-        text: 'Office of the Federal Register: Code of Federal Regulations Annual Word Count Metrics',
+        text: 'Office of the Federal Register: Code of Federal Regulations Page Count Statistics',
+        href: 'https://www.federalregister.gov/reader-aids/federal-register-statistics',
       },
       {
         icon: 'bar-chart',
-        text: 'Library of Congress: Comparative Growth Analysis of the United States Code (1926-Present)',
+        text: 'Office of the Law Revision Counsel: United States Code',
+        href: 'https://uscode.house.gov/',
       },
       {
         icon: 'bar-chart',
-        text: 'GAO: Regulatory Impact Analysis and Complexity Trends',
+        text: 'Federal Register: Category Page Statistics and Regulatory Trends',
+        href: 'https://www.federalregister.gov/reader-aids/federal-register-statistics/category-page-statistics',
       },
     ],
   },

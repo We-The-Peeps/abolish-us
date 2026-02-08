@@ -34,11 +34,13 @@ export default function CitationLink({
   href = '#',
 }: CitationLinkProps) {
   const Icon = iconMap[icon] ?? FileText
+  const isExternal = href !== '#'
 
   return (
     <a
       className="flex items-center gap-3 font-medium transition-colors hover:underline hover:text-primary"
       href={href}
+      {...(isExternal && { target: '_blank', rel: 'noopener noreferrer' })}
     >
       <Icon className="size-4 shrink-0" />
       {text}

@@ -11,13 +11,4 @@ export default defineSchema({
     text: v.string(),
     completed: v.boolean(),
   }),
-  presence: defineTable({
-    sessionId: v.string(),
-    lat: v.number(),
-    lng: v.number(),
-    isInternational: v.boolean(),
-    lastSeen: v.number(),
-  })
-    .index("sessionId", ["sessionId"])
-    .index("lastSeen", ["lastSeen"]),
 })
