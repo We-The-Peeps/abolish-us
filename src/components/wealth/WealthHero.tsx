@@ -5,7 +5,7 @@ export default function WealthHero() {
         The richest ten people own more than the bottom half of America
         combined.
       </h2>
-      <p className="mt-6 text-base text-muted-foreground md:text-lg font-serif">
+      <p className="mt-6 text-base text-muted-foreground md:text-lg">
         Pick a salary. Pick a billionaire. See for yourself.
       </p>
     </div>

@@ -9,7 +9,7 @@ export default function HeroSection() {
         <Redacted>These monsters</Redacted> are still in power
         </span>
       </h1>
-      <p className="mt-10 max-w-xl text-lg font-medium tracking-tight text-muted-foreground md:text-xl font-serif">
+      <p className="mt-10 max-w-xl text-lg font-medium tracking-tight text-muted-foreground md:text-xl">
         The files are <Redacted>public</Redacted>. The names are <Redacted>known</Redacted>.<br />
         They <Redacted>don&apos;t</Redacted> care about accountability.
       </p>
