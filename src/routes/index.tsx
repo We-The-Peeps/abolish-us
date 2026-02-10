@@ -6,6 +6,9 @@ import FailureIndex from '@/components/home/FailureIndex'
 import HeroSection from '@/components/home/HeroSection'
 import IntroSection from '@/components/home/IntroSection'
 import { scaleFade, defaultViewport } from '@/lib/motion'
+import IceDetailSection from '@/components/wealth/IceDetailSection'
+import IceHero from '@/components/wealth/IceHero'
+import IceWealthTransition from '@/components/wealth/IceWealthTransition'
 import WealthHero from '@/components/wealth/WealthHero'
 import WealthMosaic from '@/components/wealth/WealthMosaic'
 
@@ -24,8 +27,16 @@ function HomePage() {
         {/* Intro */}
         <IntroSection />
 
+        {/* ICE Section */}
+        <section className="flex w-full flex-col items-center px-4 pt-10 pb-12">
+          <IceHero />
+          <IceDetailSection />
+        </section>
+
+        <IceWealthTransition />
+
         {/* Wealth Visualization */}
-        <section className="flex w-full flex-col items-center px-4 pt-10 pb-24">
+        <section className="flex w-full flex-col items-center px-4 pt-4 pb-24">
           <WealthHero />
           <motion.div
             variants={scaleFade}

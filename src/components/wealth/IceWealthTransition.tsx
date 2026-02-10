@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { defaultViewport, fadeUp } from '@/lib/motion'
 
-export default function IntroSection() {
+export default function IceWealthTransition() {
   return (
     <motion.section
       variants={fadeUp}
@@ -11,8 +11,10 @@ export default function IntroSection() {
       className="flex w-full max-w-[720px] flex-col items-center border-y border-border px-4 pt-10 pb-10 text-center"
     >
       <p className="text-xl leading-relaxed text-muted-foreground">
-        This isn&apos;t a scandal. It&apos;s a system.<br />Power didn&apos;t fail
-        &mdash; it worked exactly as designed.
+        ICE is the weapon. Extreme wealth is the shield.
+        <br />
+        Nearly every one of the world&apos;s richest people props this up in some form: political
+        money, elite networks, and social platform power that amplifies criminalization.
       </p>
     </motion.section>
   )
