@@ -26,6 +26,69 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       {
         title: 'Abolish Us | Official Records of Systemic Failure',
       },
+      {
+        name: 'description',
+        content:
+          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+      },
+      {
+        name: 'theme-color',
+        content: '#0f0f0f',
+      },
+      {
+        property: 'og:type',
+        content: 'website',
+      },
+      {
+        property: 'og:site_name',
+        content: 'Abolish Us',
+      },
+      {
+        property: 'og:title',
+        content: 'Abolish Us | It\'s time to rebuild tomorrow',
+      },
+      {
+        property: 'og:description',
+        content:
+          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+      },
+      {
+        property: 'og:image',
+        content: '/og-card.svg',
+      },
+      {
+        property: 'og:image:type',
+        content: 'image/svg+xml',
+      },
+      {
+        property: 'og:image:width',
+        content: '1200',
+      },
+      {
+        property: 'og:image:height',
+        content: '630',
+      },
+      {
+        property: 'og:url',
+        content: 'https://abolish.us',
+      },
+      {
+        name: 'twitter:card',
+        content: 'summary_large_image',
+      },
+      {
+        name: 'twitter:title',
+        content: 'Abolish Us | We\'re Tired of Systemic Failure',
+      },
+      {
+        name: 'twitter:description',
+        content:
+          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+      },
+      {
+        name: 'twitter:image',
+        content: '/og-card.svg',
+      },
     ],
     links: [
       {
