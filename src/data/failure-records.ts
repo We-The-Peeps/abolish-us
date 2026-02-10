@@ -15,7 +15,14 @@ export const failureRecords: FailureRecord[] = [
   {
     ref: 'How the Constitution Gets Bent',
     title: 'Constitutional Overreach',
+    description:
+      'Congress has created, renamed, merged, and dissolved hundreds of oversight committees throughout its history. The full record of every committee name change is maintained by the Library of Congress.',
     citations: [
+      {
+        icon: 'landmark',
+        text: 'Library of Congress: Complete Committee Name History (House, Senate, and Joint)',
+        href: 'https://www.congress.gov/help/committee-name-history',
+      },
       {
         icon: 'gavel',
         text: 'Supreme Court of the United States: Wickard v. Filburn, 317 U.S. 111 (Expansion of Commerce Clause to Non-Commercial Activity)',

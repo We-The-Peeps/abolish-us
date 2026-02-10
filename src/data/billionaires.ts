@@ -5,8 +5,20 @@ export interface Billionaire {
 }
 
 export interface ComparisonPreset {
+  key: string
   label: string
   amount: number
+  rangeMin?: number
+  rangeMax?: number
+  kind?: 'income' | 'expense' | 'wealth'
+}
+
+export interface WealthMark {
+  id: string
+  label: string
+  amount: number
+  source?: string
+  kind: 'billionaire' | 'combined'
 }
 
 /** Forbes Real-Time Billionaires List, Feb 2026 */
@@ -27,19 +39,46 @@ export const billionaires: Billionaire[] = [
   { name: 'Amancio Ortega', netWorthBillions: 140, source: 'Zara / Inditex' },
 ]
 
+/**
+ * Bar width equals the dollar amount; bars are laid out sequentially
+ * by getSpreadRanges() so rangeMin/rangeMax are not needed here.
+ */
 export const comparisonPresets: ComparisonPreset[] = [
-  { label: 'US Minimum Wage (annual)', amount: 15_080 },
-  { label: 'Average US Salary', amount: 60_000 },
-  { label: 'Average New Car', amount: 48_000 },
-  { label: 'Average 4-Year Tuition', amount: 104_108 },
-  { label: 'Median US Net Worth', amount: 193_000 },
-  { label: 'Median US Home', amount: 420_000 },
+  { key: 'us-minimum-wage-annual', label: 'US Minimum Wage (annual)', amount: 15_080, kind: 'income' },
+  { key: 'average-new-car', label: 'Average New Car', amount: 48_000, kind: 'expense' },
+  { key: 'average-us-salary', label: 'Average US Salary', amount: 60_000, kind: 'income' },
+  { key: 'average-four-year-tuition', label: 'Average 4-Year Tuition', amount: 104_108, kind: 'expense' },
+  { key: 'median-us-net-worth', label: 'Median US Net Worth', amount: 193_000, kind: 'wealth' },
+  { key: 'median-us-home', label: 'Median US Home', amount: 420_000, kind: 'wealth' },
 ]
 
 export const totalTopTenWealth = billionaires.reduce(
   (sum, b) => sum + b.netWorthBillions,
   0,
 )
+
+export function dollarsFromBillions(amountInBillions: number): number {
+  return amountInBillions * 1_000_000_000
+}
+
+export function getBillionaireWealthMarks(): WealthMark[] {
+  return billionaires.map((b) => ({
+    id: b.name.toLowerCase().replace(/\s+/g, '-'),
+    label: b.name,
+    amount: dollarsFromBillions(b.netWorthBillions),
+    source: b.source,
+    kind: 'billionaire',
+  }))
+}
+
+export function getTopTenCombinedMark(): WealthMark {
+  return {
+    id: 'top-10-combined',
+    label: 'Top 10 Combined',
+    amount: dollarsFromBillions(totalTopTenWealth),
+    kind: 'combined',
+  }
+}
 
 export const formatDollars = (amount: number): string => {
   if (amount >= 1_000_000_000_000)

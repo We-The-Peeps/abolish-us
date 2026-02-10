@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { AnimatePresence } from 'motion/react'
 import BillionaireBlock from './BillionaireBlock'
 import ComparisonChips from './ComparisonChips'
+import MoneyScaleDrawer from './MoneyScaleDrawer'
 import TimeComparison from './TimeComparison'
 import {
   billionaires,
@@ -13,13 +14,15 @@ export default function WealthMosaic() {
   const [selectedPreset, setSelectedPreset] =
     useState<ComparisonPreset | null>(null)
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null)
+  const [isScaleOpen, setIsScaleOpen] = useState(false)
 
   const handleSelectPreset = useCallback((preset: ComparisonPreset | null) => {
     setSelectedPreset(preset)
   }, [])
 
   const handleSelectPerson = useCallback((name: string) => {
-    setSelectedPerson((prev) => (prev === name ? null : name))
+    setSelectedPerson(name)
+    setIsScaleOpen(true)
   }, [])
 
   const targetWealth = selectedPerson
@@ -48,20 +51,26 @@ export default function WealthMosaic() {
                 name={b.name}
                 netWorthBillions={b.netWorthBillions}
                 widthPercent={(b.netWorthBillions / row1Total) * 100}
-                isFirst={i === 0}
+                isTopRow
+                isBottomRow={false}
+                isFirstInRow={i === 0}
+                isLastInRow={i === row1.length - 1}
                 isSelected={selectedPerson === b.name}
                 onClick={() => handleSelectPerson(b.name)}
               />
             ))}
           </div>
           <div className="flex w-full" style={{ height: 120 }}>
-            {row2.map((b) => (
+            {row2.map((b, i) => (
               <BillionaireBlock
                 key={b.name}
                 name={b.name}
                 netWorthBillions={b.netWorthBillions}
                 widthPercent={(b.netWorthBillions / row2Total) * 100}
-                isFirst={false}
+                isTopRow={false}
+                isBottomRow
+                isFirstInRow={i === 0}
+                isLastInRow={i === row2.length - 1}
                 isSelected={selectedPerson === b.name}
                 onClick={() => handleSelectPerson(b.name)}
               />
@@ -85,6 +94,14 @@ export default function WealthMosaic() {
           />
         )}
       </AnimatePresence>
+
+      <MoneyScaleDrawer
+        open={isScaleOpen}
+        onOpenChange={setIsScaleOpen}
+        selectedPreset={selectedPreset}
+        targetWealthBillions={targetWealth}
+        targetLabel={targetLabel}
+      />
     </div>
   )
 }

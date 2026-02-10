@@ -17,10 +17,10 @@ export default function ComparisonChips({
   return (
     <div className="flex flex-wrap justify-center gap-2 mb-6">
       {comparisonPresets.map((preset) => {
-        const isActive = selected?.label === preset.label
+        const isActive = selected?.key === preset.key
         return (
           <Button
-            key={preset.label}
+            key={preset.key}
             variant={isActive ? 'default' : 'outline'}
             size="sm"
             className="font-sans text-xs"

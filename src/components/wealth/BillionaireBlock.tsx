@@ -4,7 +4,10 @@ interface BillionaireBlockProps {
   name: string
   netWorthBillions: number
   widthPercent: number
-  isFirst: boolean
+  isTopRow: boolean
+  isBottomRow: boolean
+  isFirstInRow: boolean
+  isLastInRow: boolean
   isSelected: boolean
   onClick: () => void
 }
@@ -13,20 +16,31 @@ export default function BillionaireBlock({
   name,
   netWorthBillions,
   widthPercent,
-  isFirst,
+  isTopRow,
+  isBottomRow,
+  isFirstInRow,
+  isLastInRow,
   isSelected,
   onClick,
 }: BillionaireBlockProps) {
   const dollars = netWorthBillions * 1_000_000_000
+  const radiusClasses = [
+    isTopRow && isFirstInRow ? 'rounded-tl-xl' : '',
+    isTopRow && isLastInRow ? 'rounded-tr-xl' : '',
+    isBottomRow && isFirstInRow ? 'rounded-bl-xl' : '',
+    isBottomRow && isLastInRow ? 'rounded-br-xl' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
   return (
     <button
       type="button"
-      className={`relative border border-border/60 flex items-end p-2 overflow-hidden transition-colors text-left cursor-pointer ${
+      className={`relative border border-border/60 flex items-end p-2 overflow-hidden transition-colors text-left cursor-pointer ${radiusClasses} ${
         isSelected
           ? 'bg-primary/10 ring-2 ring-primary ring-inset'
           : 'hover:bg-secondary/50'
       }`}
-      style={{ width: `${widthPercent}%`, minHeight: isFirst ? 180 : 120 }}
+      style={{ width: `${widthPercent}%`, height: '100%' }}
       onClick={onClick}
     >
       <div className="absolute inset-0 bg-secondary/30" />
