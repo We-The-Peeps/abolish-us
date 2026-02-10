@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import type { FailureRecord } from '@/data/failure-records'
-import { staggerContainer, fadeUp, slideInLeft } from '@/lib/motion'
+import { fadeUp, slideInLeft, staggerContainer } from '@/lib/motion'
 import CitationLink from './CitationLink'
 
 interface FailureCategoryProps {
@@ -19,7 +19,7 @@ export default function FailureCategory({ record }: FailureCategoryProps) {
         </h3>
         <h2 className="mt-2 text-2xl font-bold">{record.title}</h2>
         {record.description && (
-          <p className="mt-4 text-xs text-muted-foreground leading-relaxed max-w-2/3 lg:max-w-96">
+          <p className="mt-4 text-xs text-muted-foreground leading-relaxed max-w-prose lg:max-w-96">
             {record.description}
           </p>
         )}
