@@ -9,8 +9,10 @@ import {
   totalTopTenWealth,
   type ComparisonPreset,
 } from '@/data/billionaires'
+import { env } from '@/env'
 
 export default function WealthMosaic() {
+  const isWealthChartsModalEnabled = env.VITE_FEATURE_WEALTH_CHARTS_MODAL
   const [selectedPreset, setSelectedPreset] =
     useState<ComparisonPreset | null>(null)
   const [selectedPerson, setSelectedPerson] = useState<string | null>(null)
@@ -22,8 +24,10 @@ export default function WealthMosaic() {
 
   const handleSelectPerson = useCallback((name: string) => {
     setSelectedPerson(name)
-    setIsScaleOpen(true)
-  }, [])
+    if (isWealthChartsModalEnabled) {
+      setIsScaleOpen(true)
+    }
+  }, [isWealthChartsModalEnabled])
 
   const targetWealth = selectedPerson
     ? billionaires.find((b) => b.name === selectedPerson)?.netWorthBillions ??
@@ -95,13 +99,15 @@ export default function WealthMosaic() {
         )}
       </AnimatePresence>
 
-      <MoneyScaleDrawer
-        open={isScaleOpen}
-        onOpenChange={setIsScaleOpen}
-        selectedPreset={selectedPreset}
-        targetWealthBillions={targetWealth}
-        targetLabel={targetLabel}
-      />
+      {isWealthChartsModalEnabled && (
+        <MoneyScaleDrawer
+          open={isScaleOpen}
+          onOpenChange={setIsScaleOpen}
+          selectedPreset={selectedPreset}
+          targetWealthBillions={targetWealth}
+          targetLabel={targetLabel}
+        />
+      )}
     </div>
   )
 }
