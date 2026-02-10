@@ -13,6 +13,9 @@ interface MyRouterContext {
   queryClient: QueryClient
 }
 
+const description = 'When the ship is held together by a century of lies and injustice, patching the leaks is not enough. It\'s time for immediate and rapid systemic change.'
+const title = 'Abolish Us | End the Systemic Failure'
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
@@ -24,12 +27,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Abolish Us | Official Records of Systemic Failure',
+        title: title,
       },
       {
         name: 'description',
-        content:
-          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+        content: description,
       },
       {
         name: 'theme-color',
@@ -45,12 +47,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         property: 'og:title',
-        content: 'Abolish Us | It\'s time to rebuild tomorrow',
+        content: title,
       },
       {
         property: 'og:description',
-        content:
-          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+        content: description,
       },
       {
         property: 'og:image',
@@ -78,12 +79,11 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         name: 'twitter:title',
-        content: 'Abolish Us | We\'re Tired of Systemic Failure',
+        content: title,
       },
       {
         name: 'twitter:description',
-        content:
-          'When the ship is held together by decades of coverups, patching the leaks is not enough.',
+        content: description,
       },
       {
         name: 'twitter:image',
