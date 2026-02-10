@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { staggerContainer, fadeUp, defaultViewport } from '@/lib/motion'
+import { defaultViewport, fadeUp, staggerContainer } from '@/lib/motion'
 
 export default function WealthHero() {
   return (
@@ -21,7 +21,7 @@ export default function WealthHero() {
         variants={fadeUp}
         className="mt-6 text-base text-muted-foreground md:text-lg"
       >
-        Pick a salary. Pick a billionaire. See for yourself.
+        Click a salary. Click a billionaire. See for yourself.
       </motion.p>
     </motion.div>
   )

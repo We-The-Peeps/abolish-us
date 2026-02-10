@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react'
 import { AnimatePresence } from 'motion/react'
+import { useCallback, useState } from 'react'
+import {
+  billionaires,
+  type ComparisonPreset,
+  totalTopTenWealth,
+} from '@/data/billionaires'
+import { env } from '@/env'
 import BillionaireBlock from './BillionaireBlock'
 import ComparisonChips from './ComparisonChips'
 import MoneyScaleDrawer from './MoneyScaleDrawer'
 import TimeComparison from './TimeComparison'
-import {
-  billionaires,
-  totalTopTenWealth,
-  type ComparisonPreset,
-} from '@/data/billionaires'
-import { env } from '@/env'
 
 export default function WealthMosaic() {
   const isWealthChartsModalEnabled = env.VITE_FEATURE_WEALTH_CHARTS_MODAL
@@ -83,9 +83,8 @@ export default function WealthMosaic() {
         </div>
       </div>
 
-      <p className="mt-3 text-[10px] text-center text-muted-foreground font-sans uppercase tracking-widest">
-        Source: Forbes Real-Time Billionaires List, Feb 2026 &middot; Click a
-        name to compare individually
+      <p className="mt-1 text-[8px] text-center text-muted-foreground font-sans uppercase tracking-widest">
+        Source: Forbes Real-Time Billionaires List, Feb 2026
       </p>
 
       {/* Time comparison */}
@@ -98,6 +97,12 @@ export default function WealthMosaic() {
           />
         )}
       </AnimatePresence>
+
+      <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-relaxed text-muted-foreground">
+        This is not neutral wealth. Across this class, support for ICE shows up through political
+        funding, lobbying, elite philanthropy, and platform amplification on social media networks 
+        owned by those same billionaires. The same circles repeatedly intersect with Epstein-linked power networks.
+      </p>
 
       {isWealthChartsModalEnabled && (
         <MoneyScaleDrawer

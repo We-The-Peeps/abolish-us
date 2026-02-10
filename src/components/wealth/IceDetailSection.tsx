@@ -29,6 +29,14 @@ interface IceGraphic {
 
 const iceGraphics: IceGraphic[] = [
   {
+    src: '/ice/good.avif',
+    alt: 'Renee Good shown in ICE-related context',
+  },
+  {
+    src: '/ice/pretti.jpg',
+    alt: 'Alex Pretti shown in ICE-related context',
+  },
+  {
     src: '/ice/ice-detention-1.avif',
     alt: 'Detainees and officers at an ICE detention facility',
   },

@@ -12,10 +12,10 @@ export default function IceHero() {
     >
       <motion.h2
         variants={fadeUp}
-        className="mt-3 text-3xl font-black leading-tight tracking-[-0.02em] md:text-5xl"
+        className="mt-3 text-5xl font-black leading-tight tracking-[-0.02em] md:text-7xl"
       >
         While the <span className="text-destructive">guilty</span> stay<br />rich and free,<br />
-        <span className="font-black uppercase tracking-[-0.04em] text-destructive text-5xl md:text-7xl">ICE</span><br />
+        <span className="font-black uppercase tracking-[-0.04em] text-destructive text-7xl md:text-8xl">ICE</span><br />
         hunts the innocent.
       </motion.h2>
       <motion.p
