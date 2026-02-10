@@ -55,7 +55,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         property: 'og:image',
-        content: 'https://abolish.us/og-card.png?v=3',
+        content: 'https://abolish.us/og-card.png?v=4',
       },
       {
         property: 'og:image:type',
@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       },
       {
         name: 'twitter:image',
-        content: 'https://abolish.us/og-card.png?v=3',
+        content: 'https://abolish.us/og-card.png?v=4',
       },
     ],
     links: [

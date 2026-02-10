@@ -2,17 +2,20 @@
   <title id="title">ABOLISH US</title>
   <desc id="desc">Abolish Us social card</desc>
   <rect width="1200" height="630" fill="#f4f1ea" />
-  <text
-    x="600"
-    y="315"
-    text-anchor="middle"
-    dominant-baseline="middle"
-    fill="#000000"
-    font-size="132"
-    letter-spacing="4"
-    font-weight="700"
-    font-family="'Playfair Display Variable', 'Source Serif 4 Variable', Georgia, serif"
-  >
-    ABOLISH US
-  </text>
+  <g>
+    <rect x="85" y="243" width="98" height="98" rx="2" ry="2" fill="#000000" />
+    <text
+      x="210"
+      y="307"
+      text-anchor="start"
+      dominant-baseline="middle"
+      fill="#000000"
+      font-size="132"
+      letter-spacing="4"
+      font-weight="700"
+      font-family="'Playfair Display Variable', 'Source Serif 4 Variable', Georgia, serif"
+    >
+      ABOLISH US
+    </text>
+  </g>
 </svg>
