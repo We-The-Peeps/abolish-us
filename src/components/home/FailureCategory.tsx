@@ -1,4 +1,6 @@
+import { motion } from 'motion/react'
 import type { FailureRecord } from '@/data/failure-records'
+import { staggerContainer, fadeUp, slideInLeft } from '@/lib/motion'
 import CitationLink from './CitationLink'
 
 interface FailureCategoryProps {
@@ -7,7 +9,10 @@ interface FailureCategoryProps {
 
 export default function FailureCategory({ record }: FailureCategoryProps) {
   return (
-    <div className="flex flex-col border-b border-border py-12 lg:flex-row lg:items-start lg:gap-12">
+    <motion.div
+      variants={fadeUp}
+      className="flex flex-col border-b border-border py-12 lg:flex-row lg:items-start lg:gap-12"
+    >
       <div className="w-full lg:w-2/5">
         <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
           {record.ref}
@@ -19,16 +24,25 @@ export default function FailureCategory({ record }: FailureCategoryProps) {
           </p>
         )}
       </div>
-      <div className="mt-6 flex flex-1 flex-col gap-4 text-sm lg:mt-0">
+
+      {/* Citations stagger in individually */}
+      <motion.div
+        variants={staggerContainer(0.07, 0.15)}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        className="mt-6 flex flex-1 flex-col gap-4 text-sm lg:mt-0"
+      >
         {record.citations.map((citation) => (
-          <CitationLink
-            key={citation.text}
-            icon={citation.icon}
-            text={citation.text}
-            href={citation.href}
-          />
+          <motion.div key={citation.text} variants={slideInLeft}>
+            <CitationLink
+              icon={citation.icon}
+              text={citation.text}
+              href={citation.href}
+            />
+          </motion.div>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }

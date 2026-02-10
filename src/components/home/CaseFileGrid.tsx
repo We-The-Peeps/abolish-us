@@ -2,6 +2,7 @@ import { useInterval } from 'ahooks'
 import { motion, AnimatePresence } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { staggerContainer, fadeIn, lineReveal } from '@/lib/motion'
 import CaseFileCard from './CaseFileCard'
 
 interface SubjectMeta {
@@ -112,13 +113,22 @@ export default function CaseFileGrid() {
   return (
     <div className="mt-16 mb-8 w-full">
       {/* Section header */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="h-px flex-1 bg-foreground/10" />
-        <span className="font-mono text-[10px] tracking-[0.25em] text-muted-foreground/60 uppercase select-none">
+      <motion.div
+        variants={staggerContainer(0.15, 0.3)}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        className="flex items-center gap-4 mb-6"
+      >
+        <motion.div variants={lineReveal} className="h-px flex-1 bg-foreground/10 origin-right" />
+        <motion.span
+          variants={fadeIn}
+          className="font-mono text-[10px] tracking-[0.25em] text-muted-foreground/60 uppercase select-none"
+        >
           Persons of Interest
-        </span>
-        <div className="h-px flex-1 bg-foreground/10" />
-      </div>
+        </motion.span>
+        <motion.div variants={lineReveal} className="h-px flex-1 bg-foreground/10 origin-left" />
+      </motion.div>
 
       {/* Case file grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

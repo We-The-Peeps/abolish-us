@@ -1,13 +1,28 @@
+import { motion } from 'motion/react'
+import { staggerContainer, fadeUp, defaultViewport } from '@/lib/motion'
+
 export default function WealthHero() {
   return (
-    <div className="w-full max-w-[720px] text-center mb-12">
-      <h2 className="text-3xl font-black leading-snug tracking-[-0.02em] md:text-5xl">
+    <motion.div
+      variants={staggerContainer(0.12)}
+      initial="hidden"
+      whileInView="visible"
+      viewport={defaultViewport}
+      className="w-full max-w-[720px] text-center mb-12"
+    >
+      <motion.h2
+        variants={fadeUp}
+        className="text-3xl font-black leading-snug tracking-[-0.02em] md:text-5xl"
+      >
         The richest ten people own more than the bottom half of America
         combined.
-      </h2>
-      <p className="mt-6 text-base text-muted-foreground md:text-lg">
+      </motion.h2>
+      <motion.p
+        variants={fadeUp}
+        className="mt-6 text-base text-muted-foreground md:text-lg"
+      >
         Pick a salary. Pick a billionaire. See for yourself.
-      </p>
-    </div>
+      </motion.p>
+    </motion.div>
   )
 }

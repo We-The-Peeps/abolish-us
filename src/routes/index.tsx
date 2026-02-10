@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
-import HeroSection from '@/components/home/HeroSection'
+import { motion } from 'motion/react'
 import CaseFileGrid from '@/components/home/CaseFileGrid'
+import Copyright from '@/components/home/Copyright'
+import FailureIndex from '@/components/home/FailureIndex'
+import HeroSection from '@/components/home/HeroSection'
 import IntroSection from '@/components/home/IntroSection'
+import { scaleFade, defaultViewport } from '@/lib/motion'
 import WealthHero from '@/components/wealth/WealthHero'
 import WealthMosaic from '@/components/wealth/WealthMosaic'
-import FailureIndex from '@/components/home/FailureIndex'
-import Copyright from '@/components/home/Copyright'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
@@ -25,7 +27,15 @@ function HomePage() {
         {/* Wealth Visualization */}
         <section className="flex w-full flex-col items-center px-4 pt-10 pb-24">
           <WealthHero />
-          <WealthMosaic />
+          <motion.div
+            variants={scaleFade}
+            initial="hidden"
+            whileInView="visible"
+            viewport={defaultViewport}
+            className="w-full flex flex-col items-center"
+          >
+            <WealthMosaic />
+          </motion.div>
         </section>
 
         {/* Reference Index */}

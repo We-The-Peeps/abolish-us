@@ -1,13 +1,13 @@
 import {
+  Archive,
+  BarChart3,
+  ClipboardList,
+  FileText,
+  FlaskConical,
+  Gavel,
   Landmark,
   ScrollText,
-  FileText,
-  Gavel,
-  BarChart3,
   Stethoscope,
-  FlaskConical,
-  Archive,
-  ClipboardList,
 } from 'lucide-react'
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
