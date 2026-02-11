@@ -1,7 +1,7 @@
 import { useInterval } from 'ahooks'
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useState } from 'react'
-import { useIsMobile } from '@/hooks/use-mobile'
+import { useCallback, useEffect, useState } from 'react'
+import { MOBILE_BREAKPOINT, useIsMobile } from '@/hooks/use-mobile'
 import { fadeIn, lineReveal, staggerContainer } from '@/lib/motion'
 import CaseFileCard from './CaseFileCard'
 
@@ -143,17 +143,29 @@ const pickRandom = (count: number): number[] => {
 
 export default function CaseFileGrid() {
   const isMobile = useIsMobile()
-  const slotCount = isMobile ? 4 : 8
+  const isMobileOnMount =
+    typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
+  const useMobileLayout = isMobile || isMobileOnMount
+  const slotCount = useMobileLayout ? 4 : 8
+  const intervalMs = useMobileLayout ? 3000 : 5000
 
   const [selection, setSelection] = useState<number[]>(() =>
     pickRandom(slotCount),
   )
 
+  useEffect(() => {
+    setSelection((currentSelection) =>
+      currentSelection.length === slotCount
+        ? currentSelection
+        : pickRandom(slotCount),
+    )
+  }, [slotCount])
+
   const cycle = useCallback(() => {
     setSelection(pickRandom(slotCount))
   }, [slotCount])
 
-  useInterval(cycle, 6000)
+  useInterval(cycle, intervalMs)
 
   return (
     <div className="mt-16 mb-8 w-full">

@@ -15,7 +15,10 @@ export default function CaseFileCard({
     <div className="group border border-foreground/15 bg-card overflow-hidden text-left transition-colors hover:border-foreground/30">
       {/* Case ID header bar */}
       <div className="border-b border-foreground/10 px-3 py-1.5 bg-foreground/2">
-        <span className="font-mono text-[10px] tracking-[0.15em] text-muted-foreground/70 uppercase select-none">
+        <span
+          title={caseId}
+          className="block w-full truncate font-mono text-[10px] tracking-[0.15em] text-muted-foreground/70 uppercase select-none"
+        >
           {caseId}
         </span>
       </div>
@@ -33,10 +36,16 @@ export default function CaseFileCard({
 
       {/* Subject identification */}
       <div className="border-t border-foreground/10 px-3 py-2">
-        <div className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.06em] text-foreground leading-tight truncate">
+        <div
+          title={name}
+          className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.06em] text-foreground leading-tight truncate"
+        >
           {name}
         </div>
-        <div className="font-mono text-[8px] md:text-[9px] text-muted-foreground/50 uppercase tracking-[0.12em] mt-0.5 truncate">
+        <div
+          title={position}
+          className="font-mono text-[8px] md:text-[9px] text-muted-foreground/50 uppercase tracking-[0.12em] mt-0.5 truncate"
+        >
           {position}
         </div>
       </div>
