@@ -1,8 +1,8 @@
 import { useInterval } from 'ahooks'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { staggerContainer, fadeIn, lineReveal } from '@/lib/motion'
+import { fadeIn, lineReveal, staggerContainer } from '@/lib/motion'
 import CaseFileCard from './CaseFileCard'
 
 interface SubjectMeta {
@@ -52,10 +52,55 @@ const subjectMeta: Record<string, SubjectMeta> = {
     position: 'Entertainer',
     caseId: 'DOJ-EF-0071',
   },
-  random: {
+  redacted: {
     name: '[REDACTED]',
     position: '[REDACTED]',
     caseId: 'DOJ-EF-0089',
+  },
+  chomsky: {
+    name: 'Chomsky, Noam A.',
+    position: 'Public Intellectual',
+    caseId: 'DOJ-EF-0090',
+  },
+  cronkite: {
+    name: 'Cronkite, Walter L.',
+    position: 'Broadcast Journalist',
+    caseId: 'DOJ-EF-0091',
+  },
+  dershowitz: {
+    name: 'Dershowitz, Alan M.',
+    position: 'Attorney',
+    caseId: 'DOJ-EF-0092',
+  },
+  maxwell: {
+    name: 'Maxwell, Ghislaine C.',
+    position: 'Socialite',
+    caseId: 'DOJ-EF-0093',
+  },
+  gates: {
+    name: 'Gates, Bill H.',
+    position: 'Chair, Gates Foundation',
+    caseId: 'DOJ-EF-0094',
+  },
+  jagger: {
+    name: 'Jagger, Mick',
+    position: 'Musician',
+    caseId: 'DOJ-EF-0095',
+  },
+  brunel: {
+    name: 'Brunel, Jean-Luc',
+    position: 'Modeling Agent',
+    caseId: 'DOJ-EF-0096',
+  },
+  brin: {
+    name: 'Brin, Sergey M.',
+    position: 'Google Co-Founder',
+    caseId: 'DOJ-EF-0097',
+  },
+  tucker: {
+    name: 'Carlson, Tucker S.',
+    position: 'Media Personality',
+    caseId: 'DOJ-EF-0098',
   },
 }
 

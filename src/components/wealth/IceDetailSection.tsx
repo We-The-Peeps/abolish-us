@@ -29,7 +29,7 @@ interface IceGraphic {
 
 const iceGraphics: IceGraphic[] = [
   {
-    src: '/ice/good.avif',
+    src: '/ice/good.jpg',
     alt: 'Renee Good shown in ICE-related context',
   },
   {
