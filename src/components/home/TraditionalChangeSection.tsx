@@ -14,7 +14,7 @@ export default function TraditionalChangeSection() {
         variants={fadeUp}
         className="text-3xl font-black leading-tight tracking-[-0.02em] md:text-5xl"
       >
-        Traditional change is wildly unlikely.
+        Traditional change is wildly unlikely
       </motion.h2>
       <motion.p variants={fadeUp} className="mt-6 text-base text-muted-foreground md:text-lg">
         The ultra-elite bankroll lobbyists, steer policy, and pressure social platforms to

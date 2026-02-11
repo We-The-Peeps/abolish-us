@@ -4,11 +4,11 @@ import CaseFileGrid from '@/components/home/CaseFileGrid'
 import Copyright from '@/components/home/Copyright'
 import FailureIndex from '@/components/home/FailureIndex'
 import HeroSection from '@/components/home/HeroSection'
-import IntroSection from '@/components/home/IntroSection'
 import IceToChangeTransition from '@/components/home/IceToChangeTransition'
+import IntroSection from '@/components/home/IntroSection'
 import RebuildShipSection from '@/components/home/RebuildShipSection'
 import TraditionalChangeSection from '@/components/home/TraditionalChangeSection'
-import TraditionalToRecordTransition from '@/components/home/TraditionalToRecordTransition'
+import WhyIsChangeSlowDivider from '@/components/home/WhyIsChangeSlowDivider'
 import IceDetailSection from '@/components/wealth/IceDetailSection'
 import IceHero from '@/components/wealth/IceHero'
 import IceWealthTransition from '@/components/wealth/IceWealthTransition'
@@ -62,7 +62,7 @@ function HomePage() {
 
         <IceToChangeTransition />
         <TraditionalChangeSection />
-        <TraditionalToRecordTransition />
+        <WhyIsChangeSlowDivider />
 
         {/* Reference Index */}
         <FailureIndex />

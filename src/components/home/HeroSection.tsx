@@ -14,7 +14,7 @@ export default function HeroSection() {
         variants={fadeUp}
         className="text-5xl font-black leading-tight tracking-[-0.02em] md:text-7xl mx-auto"
       >
-        Rich <Redacted>elites ran with</Redacted> predators
+        Rich <Redacted>elites ran with</Redacted> <span className="text-destructive">predators</span>
         <motion.span variants={fadeUp} className="block mt-3">
           <Redacted>These vile humans</Redacted> walk<br />free
         </motion.span>
