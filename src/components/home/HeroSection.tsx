@@ -11,9 +11,9 @@ export default function HeroSection() {
   })
 
   return (
-    <RedactedGroup baseDelay={0.82} stagger={0.28}>
+    <RedactedGroup baseDelay={1} stagger={0.28}>
       <div>
-        <h1 className="text-5xl font-black leading-tight tracking-[-0.02em] md:text-7xl mx-auto">
+        <h1 className="text-4xl sm:text-5xl font-black leading-tight tracking-[-0.02em] lg:text-7xl mx-auto">
           <motion.span
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -31,12 +31,12 @@ export default function HeroSection() {
           >
             <Redacted order={0}>elites ran with</Redacted>
           </motion.span>
-          {' '}
+          
           <motion.span
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={heroChunkTransition(2)}
-            className="inline-block text-destructive"
+            className="block text-destructive"
           >
             predators
           </motion.span>
@@ -69,15 +69,32 @@ export default function HeroSection() {
             </motion.span>
           </span>
         </h1>
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={heroChunkTransition(6)}
-          className="mt-10 max-w-xl text-lg font-medium tracking-tight text-muted-foreground md:text-xl mx-auto"
-        >
-          The files are <Redacted order={2}>public</Redacted>. The names are <Redacted order={3}>known</Redacted>.<br />
-          They <Redacted order={4}>don&apos;t</Redacted> care about accountability.
-        </motion.p>
+        <div className="mt-10 max-w-xl text-lg font-medium tracking-tight text-muted-foreground md:text-xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={heroChunkTransition(6)}
+            className="m-0"
+          >
+            The files are <Redacted order={2}>public</Redacted>.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={heroChunkTransition(7)}
+            className="m-0"
+          >
+            The names are <Redacted order={3}>known</Redacted>.
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={heroChunkTransition(8)}
+            className="m-0"
+          >
+            They <Redacted order={4}>don&apos;t care</Redacted> about a damn thing.
+          </motion.p>
+        </div>
       </div>
     </RedactedGroup>
   )

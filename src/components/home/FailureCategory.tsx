@@ -11,7 +11,7 @@ export default function FailureCategory({ record }: FailureCategoryProps) {
   return (
     <motion.div
       variants={fadeUp}
-      className="flex flex-col border-b border-border py-12 lg:flex-row lg:items-start lg:gap-12"
+      className="flex flex-col border-b border-border py-12 first:pt-0 lg:flex-row lg:items-start lg:gap-12"
     >
       <div className="w-full lg:w-2/5">
         <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
