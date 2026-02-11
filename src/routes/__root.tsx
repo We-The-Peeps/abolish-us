@@ -13,7 +13,7 @@ interface MyRouterContext {
   queryClient: QueryClient
 }
 
-const description = 'When the ship is held together by a century of lies and injustice, patching the leaks is not enough. It\'s time for immediate and rapid systemic change.'
+const description = "When the ship is held together by lies, contempt, and shadowy cabals, it's time to start building a new ship."
 const title = 'Abolish Us | End the Systemic Failure'
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
