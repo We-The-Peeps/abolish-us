@@ -52,6 +52,11 @@ const iceGraphics: IceGraphic[] = [
   },
 ]
 
+const noemGraphic: IceGraphic = {
+  src: '/ice/noem.webp',
+  alt: 'Kristi Noem shown in ICE-related context',
+}
+
 export default function IceDetailSection() {
   return (
     <motion.section
@@ -89,6 +94,24 @@ export default function IceDetailSection() {
             </AspectRatio>
           </motion.figure>
         ))}
+      </div>
+
+      <div className="mb-4">
+        <motion.figure
+          key={noemGraphic.src}
+          variants={fadeUp}
+          className="overflow-hidden rounded-xl border border-border bg-card"
+        >
+          {/* <AspectRatio ratio={(16/9)*2}> */}
+          <div className="aspect-video md:aspect-16/5">
+            <img
+              src={noemGraphic.src}
+              alt={noemGraphic.alt}
+              className="h-full w-full object-cover grayscale scale-125 md:scale-100"
+              loading="lazy"
+            />
+          </div>
+        </motion.figure>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
