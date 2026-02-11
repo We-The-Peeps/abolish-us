@@ -17,10 +17,13 @@ export default function TraditionalChangeSection() {
         Traditional change is wildly unlikely.
       </motion.h2>
       <motion.p variants={fadeUp} className="mt-6 text-base text-muted-foreground md:text-lg">
-        Ultra-elite money bankrolls lobbyists, steers policy, and pressures social platforms to
+        The ultra-elite bankroll lobbyists, steer policy, and pressure social platforms to
         censor dissent while amplifying criminalization narratives. Some of the same power circles
-        also intersect with Epstein-linked networks. We do not need slow reform theater - we need
-        immediate, rapid system change.
+        also intersect with Epstein-linked networks. 
+      </motion.p>
+      <motion.p variants={fadeUp} className="mt-6 text-base text-muted-foreground md:text-lg">
+        All of this is being done out in the open, and courts are powerless to address anything. 
+        We do not need slow reform theater - we need <strong>immediate, rapid systemic change</strong>.
       </motion.p>
     </motion.section>
   )

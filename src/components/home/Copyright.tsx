@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { fadeIn, defaultViewport } from '@/lib/motion'
+import { defaultViewport, fadeIn } from '@/lib/motion'
 
 export default function Copyright() {
   return (
@@ -11,7 +11,7 @@ export default function Copyright() {
       className="w-full py-12 text-center"
     >
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-        &copy; {new Date().getFullYear()} ABOLISH US {'// '}PUBLIC DOMAIN
+        &copy; {new Date().getFullYear()} {'// '}PUBLIC DOMAIN
       </div>
     </motion.div>
   )
