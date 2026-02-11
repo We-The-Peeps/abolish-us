@@ -1,6 +1,12 @@
 import { motion } from 'motion/react'
 import { AspectRatio } from '@/components/ui/aspect-ratio'
-import { defaultViewport, fadeUp, staggerContainer } from '@/lib/motion'
+import {
+  defaultViewport,
+  fadeIn,
+  fadeUp,
+  lineReveal,
+  staggerContainer,
+} from '@/lib/motion'
 
 interface IceDetail {
   title: string
@@ -55,12 +61,15 @@ export default function IceDetailSection() {
       viewport={defaultViewport}
       className="w-full max-w-[960px] px-4 pt-10 pb-4"
     >
-      <motion.div variants={fadeUp} className="mb-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+      <motion.div variants={staggerContainer(0.15, 0.3)} className="mb-6 flex items-center gap-4">
+        <motion.div variants={lineReveal} className="h-px flex-1 bg-foreground/10 origin-right" />
+        <motion.span
+          variants={fadeIn}
+          className="font-mono text-[10px] tracking-[0.25em] text-muted-foreground/60 uppercase select-none"
+        >
           What ICE Enforces
-        </p>
-        <div className="h-px flex-1 bg-border" />
+        </motion.span>
+        <motion.div variants={lineReveal} className="h-px flex-1 bg-foreground/10 origin-left" />
       </motion.div>
 
       <div className="mb-4 grid gap-4 md:grid-cols-2">
