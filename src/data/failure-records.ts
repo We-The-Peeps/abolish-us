@@ -63,4 +63,27 @@ export const failureRecords: FailureRecord[] = [
       },
     ],
   },
+  {
+    ref: 'When Secrets Replace Oversight',
+    title: 'Conspiracy & Corruption',
+    description:
+      'From declassified covert operations to disputed geopolitical planning memos, public trust fractures when consequential decisions are hidden from democratic oversight and only documented years later.',
+    citations: [
+      {
+        icon: 'landmark',
+        text: "[Senate.gov] Project MKULTRA, The CIA's Program of Research in advanced torture and mind control",
+        href: 'https://www.intelligence.senate.gov/wp-content/uploads/2024/08/sites-default-files-hearings-95mkultra.pdf',
+      },
+      {
+        icon: 'landmark',
+        text: '[State.gov] U.S. Department of State, Office of the Historian: Arab-Israeli Dispute, Jan. 1977-Aug. 1978',
+        href: 'https://static.history.state.gov/frus/frus1977-80v08/pdf/frus1977-80v08.pdf',
+      },
+      {
+        icon: 'landmark',
+        text: '[CIA.gov] Operation Paperclip - The Secret Intelligence Program to Bring Nazi Scientists to America',
+        href: 'https://www.cia.gov/resources/csi/static/Review-Operation-Paperclip.pdf',
+      },
+    ],
+  },
 ]
