@@ -35,11 +35,13 @@ bun run build-storybook
 - Linting and formatting: Biome
 - Component docs: Storybook
 
-## Open Source Progress
+## Open Source Readiness
 
-- Week 1 complete: legal and contribution baseline
-- Week 2 complete: Commitizen, commitlint, Husky hooks, lint-staged, and commit message enforcement
-- Week 3 complete: Jest + React Testing Library setup with coverage reporting and CI artifact upload
+- Contribution and conduct guidelines are documented.
+- Commit conventions are enforced with Commitizen and commitlint.
+- Hooks and CI validate commit quality, tests, and build output.
+- Jest + React Testing Library coverage reports are published as CI artifacts.
+- Railway handles production and PR deployment after repository quality gates pass.
 
 ## Open Source
 

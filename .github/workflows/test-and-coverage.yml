@@ -1,4 +1,4 @@
-name: Test and Coverage
+name: PR Validation
 
 on:
   pull_request:
@@ -6,9 +6,15 @@ on:
     branches:
       - main
 
+concurrency:
+  group: pr-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,9 +31,22 @@ jobs:
       - name: Generate coverage report
         run: bun run test:coverage
 
+      - name: Build application
+        run: bun run build
+
+      - name: Build Storybook
+        run: bun run build-storybook
+
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v4
         with:
           name: jest-coverage
           path: coverage/jest
+          if-no-files-found: error
+
+      - name: Upload Storybook artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: storybook-static
           if-no-files-found: error

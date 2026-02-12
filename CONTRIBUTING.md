@@ -60,6 +60,13 @@ Apply these branch protection settings to `main` in GitHub:
 - Require branches to be up to date before merging
 - Restrict force pushes and branch deletion
 - Do not allow bypassing these settings
+- Mark these checks as required:
+  - `Commit Lint`
+  - `PR Validation`
+- Apply branch protection to `prod` as well:
+  - Require pull requests before merging
+  - Require status checks to pass before merging
+  - Mark `Release Verification` as required
 
 ## Commit Messages
 
@@ -96,7 +103,7 @@ local hooks will still fail CI.
 
 ## Testing and Coverage
 
-Week 3 uses Jest + React Testing Library as the primary test stack.
+This repository uses Jest + React Testing Library as the primary test stack.
 
 ```bash
 bun run test
@@ -105,7 +112,24 @@ bun run test:coverage
 ```
 
 Coverage reports are generated under `coverage/jest` and uploaded in CI by the
-`Test and Coverage` workflow.
+`PR Validation` workflow.
+
+## CI/CD Pipelines
+
+This repository uses robust pipelines for pull requests and release verification:
+
+- `PR Validation`
+  - runs tests and coverage
+  - builds app and Storybook
+  - uploads `coverage/jest` and `storybook-static` artifacts
+- `Release Verification`
+  - runs on pull requests targeting the `prod` branch
+  - verifies tests, coverage, app build, and Storybook build
+  - acts as the quality gate before merging to `prod`, which Railway deploys automatically
+- `Prod Promotion PR`
+  - runs on merges to `main`
+  - automatically creates or updates a single structured `main` -> `prod` pull request
+  - keeps production promotion centralized in one PR flow
 
 ## Reporting Bugs and Requesting Features
 
