@@ -63,6 +63,7 @@ Apply these branch protection settings to `main` in GitHub:
 - Mark these checks as required:
   - `Commit Lint`
   - `PR Validation`
+  - `Storybook Visual Review / chromatic`
 - Apply branch protection to `prod` as well:
   - Require pull requests before merging
   - Require status checks to pass before merging
@@ -111,8 +112,8 @@ bun run test:watch
 bun run test:coverage
 ```
 
-Coverage reports are generated under `coverage/jest` and uploaded in CI by the
-`PR Validation` workflow.
+Coverage reports are generated under `coverage/jest`, uploaded in CI, and
+published to Codecov for PR feedback.
 
 ## CI/CD Pipelines
 
@@ -120,8 +121,12 @@ This repository uses robust pipelines for pull requests and release verification
 
 - `PR Validation`
   - runs tests and coverage
+  - uploads coverage to Codecov
   - builds app and Storybook
   - uploads `coverage/jest` and `storybook-static` artifacts
+- `Storybook Visual Review`
+  - publishes Storybook previews to Chromatic for pull requests
+  - provides visual regression checks and shareable preview links
 - `Release Verification`
   - runs on pull requests targeting the `prod` branch
   - verifies tests, coverage, app build, and Storybook build
@@ -130,6 +135,13 @@ This repository uses robust pipelines for pull requests and release verification
   - runs on merges to `main`
   - automatically creates or updates a single structured `main` -> `prod` pull request
   - keeps production promotion centralized in one PR flow
+
+### Maintainer setup required
+
+Configure repository secrets:
+
+- `CHROMATIC_PROJECT_TOKEN`
+- `CODECOV_TOKEN` (required for private repositories)
 
 ## Reporting Bugs and Requesting Features
 
