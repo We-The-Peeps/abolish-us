@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an enhancement
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the proposal. Clear problem statements help us evaluate quickly.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user problem are you trying to solve?
+      placeholder: Describe the pain point
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe your preferred approach
+      placeholder: Describe the expected behavior and UX
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any alternatives or trade-offs?
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Mockups, references, examples
