@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 
 const meta = {
-	title: "UI/Dialog",
+	title: "primitives/Dialog",
 	component: Dialog,
 	parameters: {
 		layout: "centered",
