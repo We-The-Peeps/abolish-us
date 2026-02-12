@@ -105,35 +105,45 @@ const subjectMeta: Record<string, SubjectMeta> = {
 	},
 };
 
-/**
- * Discover all POI images at build time.
- * eager + ?url tells Vite to resolve each file to its served URL.
- * Keys are on-disk paths; values are the public URLs.
- */
-const poiGlob = import.meta.glob<string>("/public/poi/*.{webp,png,jpg,jpeg}", {
-	eager: true,
-	query: "?url",
-	import: "default",
-});
+const poiFilenames = [
+	"andrew-1.webp",
+	"bannon-1.jpg",
+	"branson-1.webp",
+	"branson-2.jpg",
+	"brin-1.jpg",
+	"brunel-1.jpg",
+	"brunel-2.jpg",
+	"chomsky-1.jpg",
+	"clinton-1.webp",
+	"clinton-2.jpg",
+	"clinton-3.jpg",
+	"cronkite-1.jpg",
+	"dershowitz-1.jpg",
+	"gates-1.jpg",
+	"gates-2.jpg",
+	"jagger-1.jpg",
+	"maxwell-1.jpg",
+	"maxwell-2.jpg",
+	"michael-1.jpg",
+	"redacted-1.jpg",
+	"trump-1.webp",
+	"trump-2.jpg",
+	"tucker-1.jpg",
+	"woody-1.webp",
+] as const;
 
 /** Build subjects from discovered files + metadata lookup */
-const allSubjects: CaseSubject[] = Object.entries(poiGlob).map(
-	([path, url]) => {
-		const filename =
-			path
-				.split("/")
-				.pop()
-				?.replace(/\.\w+$/, "") ?? "";
-		const key = filename.replace(/-\d+$/, "");
-		const meta = subjectMeta[key];
-		return {
-			src: url,
-			name: meta?.name ?? "[UNKNOWN]",
-			position: meta?.position ?? "[UNKNOWN]",
-			caseId: `${meta?.caseId ?? "DOJ-EF-UNKN"}-${filename}`,
-		};
-	},
-);
+const allSubjects: CaseSubject[] = poiFilenames.map((filename) => {
+	const basename = filename.replace(/\.\w+$/, "");
+	const key = basename.replace(/-\d+$/, "");
+	const meta = subjectMeta[key];
+	return {
+		src: `/poi/${filename}`,
+		name: meta?.name ?? "[UNKNOWN]",
+		position: meta?.position ?? "[UNKNOWN]",
+		caseId: `${meta?.caseId ?? "DOJ-EF-UNKN"}-${basename}`,
+	};
+});
 
 const pickRandom = (count: number): number[] => {
 	const indices = allSubjects.map((_, i) => i);
