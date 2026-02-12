@@ -19,6 +19,8 @@ bun --bun run test
 bun --bun run lint
 bun --bun run format
 bun --bun run check
+bun --bun run commit
+bun --bun run commitlint
 bun --bun run storybook
 bun --bun run build-storybook
 ```
@@ -30,6 +32,11 @@ bun --bun run build-storybook
 - Framework: TanStack Start + React
 - Linting and formatting: Biome
 - Component docs: Storybook
+
+## Open Source Progress
+
+- Week 1 complete: legal and contribution baseline
+- Week 2 complete: Commitizen, commitlint, Husky hooks, lint-staged, and commit message enforcement
 
 ## Open Source
 

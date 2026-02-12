@@ -62,15 +62,36 @@ Apply these branch protection settings to `main` in GitHub:
 
 ## Commit Messages
 
-This repository is moving to Conventional Commits and Commitizen in Week 2.
-For now, please follow Conventional Commits manually:
+Create commits with Commitizen:
+
+```bash
+bun --bun run commit
+```
+
+The following commit types are accepted:
 
 - `feat: ...`
 - `fix: ...`
 - `docs: ...`
+- `style: ...`
 - `chore: ...`
 - `refactor: ...`
+- `perf: ...`
 - `test: ...`
+- `build: ...`
+- `ci: ...`
+- `revert: ...`
+
+### Hook Enforcement
+
+- `pre-commit`: runs `lint-staged` with Biome auto-fixes
+- `commit-msg`: blocks non-conventional commit messages
+- `pre-push`: runs `test`
+
+### CI Enforcement
+
+GitHub Actions also validates commit messages in pull requests so bypassing
+local hooks will still fail CI.
 
 ## Reporting Bugs and Requesting Features
 
