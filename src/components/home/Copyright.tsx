@@ -1,4 +1,6 @@
+import { Github } from "lucide-react";
 import { motion } from "motion/react";
+import { Button } from "@/components/ui/button";
 import { defaultViewport, fadeIn } from "@/lib/motion";
 
 export default function Copyright() {
@@ -10,8 +12,24 @@ export default function Copyright() {
 			viewport={defaultViewport}
 			className="w-full py-12 text-center"
 		>
-			<div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-				&copy; We The People {new Date().getFullYear()} {"// "}PUBLIC DOMAIN
+			<div className="flex flex-col items-center gap-2 text-xs tracking-wide text-muted-foreground font-medium">
+				&copy; {new Date().getFullYear()} We The People {"// "}Public Domain
+				<Button
+					variant="outline"
+					size="xs"
+					className="tracking-wide"
+					nativeButton={false}
+					render={
+						<a
+							href="https://github.com/We-The-Peeps/abolish-us"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<Github data-icon="inline-start" />
+							Contribute on GitHub
+						</a>
+					}
+				/>
 			</div>
 		</motion.div>
 	);
