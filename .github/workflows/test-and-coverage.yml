@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +31,16 @@ jobs:
 
       - name: Generate coverage report
         run: bun run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/jest/lcov.info
+          flags: jest
+          name: jest-coverage
+          fail_ci_if_error: true
+          verbose: true
 
       - name: Build application
         run: bun run build

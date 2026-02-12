@@ -40,7 +40,8 @@ bun run build-storybook
 - Contribution and conduct guidelines are documented.
 - Commit conventions are enforced with Commitizen and commitlint.
 - Hooks and CI validate commit quality, tests, and build output.
-- Jest + React Testing Library coverage reports are published as CI artifacts.
+- Jest coverage is published to Codecov with PR coverage feedback.
+- Storybook previews and visual checks are published to Chromatic for PR review.
 - Railway handles production and PR deployment after repository quality gates pass.
 
 ## Open Source
