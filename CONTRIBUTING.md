@@ -12,7 +12,7 @@ requests stay easy to review and safe to ship.
 
 ```bash
 bun install
-bun --bun run dev
+bun run dev
 ```
 
 ## Branching
@@ -38,9 +38,10 @@ bun --bun run dev
 2. Run local quality checks:
 
 ```bash
-bun --bun run check
-bun --bun run test
-bun --bun run build
+bun run check
+bun run test
+bun run test:coverage
+bun run build
 ```
 
 3. Open a PR using the provided template
@@ -65,7 +66,7 @@ Apply these branch protection settings to `main` in GitHub:
 Create commits with Commitizen:
 
 ```bash
-bun --bun run commit
+bun run commit
 ```
 
 The following commit types are accepted:
@@ -92,6 +93,19 @@ The following commit types are accepted:
 
 GitHub Actions also validates commit messages in pull requests so bypassing
 local hooks will still fail CI.
+
+## Testing and Coverage
+
+Week 3 uses Jest + React Testing Library as the primary test stack.
+
+```bash
+bun run test
+bun run test:watch
+bun run test:coverage
+```
+
+Coverage reports are generated under `coverage/jest` and uploaded in CI by the
+`Test and Coverage` workflow.
 
 ## Reporting Bugs and Requesting Features
 

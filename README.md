@@ -6,23 +6,25 @@ A TanStack Start and React application.
 
 ```bash
 bun install
-bun --bun run dev
+bun run dev
 ```
 
 ## Scripts
 
 ```bash
-bun --bun run dev
-bun --bun run build
-bun --bun run preview
-bun --bun run test
-bun --bun run lint
-bun --bun run format
-bun --bun run check
-bun --bun run commit
-bun --bun run commitlint
-bun --bun run storybook
-bun --bun run build-storybook
+bun run dev
+bun run build
+bun run preview
+bun run test
+bun run test:watch
+bun run test:coverage
+bun run lint
+bun run format
+bun run check
+bun run commit
+bun run commitlint
+bun run storybook
+bun run build-storybook
 ```
 
 ## Project Standards
@@ -37,6 +39,7 @@ bun --bun run build-storybook
 
 - Week 1 complete: legal and contribution baseline
 - Week 2 complete: Commitizen, commitlint, Husky hooks, lint-staged, and commit message enforcement
+- Week 3 complete: Jest + React Testing Library setup with coverage reporting and CI artifact upload
 
 ## Open Source
 

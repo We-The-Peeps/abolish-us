@@ -8,9 +8,9 @@ Add before/after visuals when applicable.
 
 ## Test plan
 
-- [ ] Local checks pass (`bun --bun run check`)
-- [ ] Tests pass (`bun --bun run test`)
-- [ ] Build passes (`bun --bun run build`)
+- [ ] Local checks pass (`bun run check`)
+- [ ] Tests pass (`bun run test`)
+- [ ] Build passes (`bun run build`)
 - [ ] Storybook updated for component changes
 
 ## Risk and rollback
