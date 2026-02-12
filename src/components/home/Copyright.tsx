@@ -21,7 +21,7 @@ export default function Copyright() {
 					nativeButton={false}
 					render={
 						<a
-							href="https://github.com/We-The-Peeps/abolish-us"
+							href="https://git.new/abolish-us"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
