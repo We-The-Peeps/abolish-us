@@ -48,27 +48,6 @@ bun run build
 4. Fill in rationale, test plan, and screenshots (if UI changes)
 5. Wait for required CI checks and review approvals
 
-## Maintainer Repository Settings
-
-Apply these branch protection settings to `main` in GitHub:
-
-- Require pull requests before merging
-- Require at least 1 approval
-- Require review from code owners
-- Require conversation resolution before merging
-- Require status checks to pass before merging
-- Require branches to be up to date before merging
-- Restrict force pushes and branch deletion
-- Do not allow bypassing these settings
-- Mark these checks as required:
-  - `Commit Lint`
-  - `PR Validation`
-  - `Storybook Visual Review / chromatic`
-- Apply branch protection to `prod` as well:
-  - Require pull requests before merging
-  - Require status checks to pass before merging
-  - Mark `Release Verification` as required
-
 ## Commit Messages
 
 Create commits with Commitizen:
