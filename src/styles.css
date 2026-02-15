@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "overlayscrollbars/overlayscrollbars.css";
 @import "@fontsource-variable/outfit";
 @import "@fontsource-variable/playfair-display";
 @import "@fontsource-variable/source-serif-4";
@@ -170,4 +171,47 @@ code {
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
   }
+}
+
+/* Ensure the browser scrollbar gutter uses page background color. */
+html {
+  background: var(--background);
+}
+
+html, body {
+  height: 100%;
+}
+
+/* Scrollbar track/gutter: match page background */
+html {
+  scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) var(--background);
+}
+
+::-webkit-scrollbar {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+/* When dialogs are open, lock our scroll root instead of relying on <body> scroll. */
+html[data-dialog-scroll-lock="true"] [data-app-scroll-root] {
+  overflow: hidden !important;
+}
+
+/* MapLibre attribution: keep it always expanded for the ICE map. */
+.ice-reports-map .maplibregl-ctrl-attrib.maplibregl-compact button {
+  display: none;
+}
+
+.ice-reports-map .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner {
+  display: block;
+}
+
+.ice-reports-map .maplibregl-ctrl-attrib {
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0.5rem;
 }

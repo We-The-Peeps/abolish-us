@@ -4,11 +4,10 @@ import CaseFileGrid from "@/components/home/CaseFileGrid";
 import Copyright from "@/components/home/Copyright";
 import FailureIndex from "@/components/home/FailureIndex";
 import HeroSection from "@/components/home/HeroSection";
-import IceToChangeTransition from "@/components/home/IceToChangeTransition";
-import IntroSection from "@/components/home/IntroSection";
 import RebuildShipSection from "@/components/home/RebuildShipSection";
 import TraditionalChangeSection from "@/components/home/TraditionalChangeSection";
 import WhyIsChangeSlowDivider from "@/components/home/WhyIsChangeSlowDivider";
+import IceReportsMapSection from "@/components/ice-reports-map/IceReportsMapSection";
 import SectionBreak from "@/components/ui/section-break";
 import IceDetailSection from "@/components/wealth/IceDetailSection";
 import IceHero from "@/components/wealth/IceHero";
@@ -47,6 +46,7 @@ function HomePage() {
 				<section className="flex w-full flex-col items-center px-4 pt-10 pb-12">
 					<IceHero />
 					<IceDetailSection />
+					<IceReportsMapSection />
 				</section>
 
 				{isWealthFeatureEnabled && (
