@@ -25,7 +25,7 @@
     "lint-staged": "lint-staged"
   },
   "dependencies": {
-    "@base-ui/react": "^1.1.0",
+    "@base-ui/react": "^1.2.0",
     "@fontsource-variable/outfit": "^5.2.8",
     "@fontsource-variable/playfair-display": "^5.2.8",
     "@fontsource-variable/source-serif-4": "^5.2.9",
