@@ -28,6 +28,14 @@ interface IceReportRecord {
 	lat: number | null;
 }
 
+interface IceReportCardRecord extends IceReportRecord {
+	mediaCount: number | null;
+	commentCount: number | null;
+	smallThumbnail: string | null;
+	numOfficials: number | null;
+	numVehicles: number | null;
+}
+
 interface IceReportDetailRecord {
 	sourceId: string;
 	sourceCreatedAt: string;
@@ -148,6 +156,44 @@ function normalizeRows(
 	}));
 }
 
+function normalizeCardRows(
+	rows: Array<{
+		sourceId: string;
+		sourceCreatedAt: Date | null;
+		incidentTime: Date | null;
+		ingestedAt: Date | null;
+		approved: boolean | null;
+		archived: boolean | null;
+		reportType: string | null;
+		locationDescription: string | null;
+		lon: number | null;
+		lat: number | null;
+		mediaCount: number | null;
+		commentCount: number | null;
+		smallThumbnail: string | null;
+		numOfficials: number | null;
+		numVehicles: number | null;
+	}>,
+): IceReportCardRecord[] {
+	return rows.map((row) => ({
+		sourceId: row.sourceId,
+		sourceCreatedAt: toIsoString(row.sourceCreatedAt),
+		incidentTime: toIsoStringOrNull(row.incidentTime),
+		ingestedAt: toIsoString(row.ingestedAt),
+		approved: row.approved,
+		archived: row.archived,
+		reportType: row.reportType,
+		locationDescription: row.locationDescription,
+		lon: row.lon,
+		lat: row.lat,
+		mediaCount: row.mediaCount,
+		commentCount: row.commentCount,
+		smallThumbnail: row.smallThumbnail,
+		numOfficials: row.numOfficials,
+		numVehicles: row.numVehicles,
+	}));
+}
+
 export async function getRecentIceReports(
 	input: IceReportsRecentInput,
 ): Promise<IceReportRecord[]> {
@@ -197,7 +243,7 @@ export async function getRecentIceReports(
 
 export async function getIceReportsInBbox(
 	input: IceReportsBboxInput,
-): Promise<IceReportRecord[]> {
+): Promise<IceReportCardRecord[]> {
 	const serverConfig = getServerConfig();
 	const limit = clampLimit(input.limit);
 	const sinceDate = toLookbackDate(input.lookbackHours);
@@ -241,13 +287,25 @@ export async function getIceReportsInBbox(
 					locationDescription: iceReports.locationDescription,
 					lon: iceReports.lon,
 					lat: iceReports.lat,
+					mediaCount: iceReportDetails.mediaCount,
+					commentCount: iceReportDetails.commentCount,
+					smallThumbnail: iceReportDetails.smallThumbnail,
+					numOfficials: iceReportDetails.numOfficials,
+					numVehicles: iceReportDetails.numVehicles,
 				})
 				.from(iceReports)
+				.leftJoin(
+					iceReportDetails,
+					and(
+						eq(iceReports.sourceId, iceReportDetails.sourceId),
+						eq(iceReports.sourceCreatedAt, iceReportDetails.sourceCreatedAt),
+					),
+				)
 				.where(and(...whereConditions))
 				.orderBy(desc(iceReports.sourceCreatedAt))
 				.limit(limit);
 
-			return normalizeRows(rows);
+			return normalizeCardRows(rows);
 		},
 	);
 }

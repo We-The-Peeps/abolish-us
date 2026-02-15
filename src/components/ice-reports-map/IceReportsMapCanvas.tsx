@@ -5,16 +5,14 @@ import type {
 	MapGeoJSONFeature,
 	Map as MapLibreMap,
 } from "maplibre-gl";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useId, useMemo, useRef, useState } from "react";
 import MapLibre, {
 	type MapLayerMouseEvent,
 	type MapRef,
 	NavigationControl,
 } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import IceReportsClusterPopup, {
-	type IceReportsClusterPopupItem,
-} from "./IceReportsClusterPopup";
+import type { IceReportCard, IceReportSelection } from "./iceReportsCards";
 import {
 	CLUSTER_MAX_ZOOM,
 	CLUSTER_RADIUS_PX,
@@ -23,7 +21,11 @@ import {
 	MAP_SOURCE_ID,
 	unclusteredPointLayer,
 } from "./iceReportsMapLayers";
-import { featureProps, roundCoordinate } from "./iceReportsMapUtils";
+import {
+	featureProps,
+	roundCoordinate,
+	toNumberOrNull,
+} from "./iceReportsMapUtils";
 import { IceReportsMapLayer, IceReportsMapSource } from "./maplibreTsdWrappers";
 
 interface IceReportsMapCanvasViewport {
@@ -40,27 +42,26 @@ interface HoverInfo {
 	subtitle?: string;
 }
 
-interface ClusterPopupState {
-	clusterId: number;
-	clusterCount: number;
-	items: IceReportsClusterPopupItem[];
-	isLoading: boolean;
-}
-
 export interface IceReportsMapCanvasProps {
 	geojson: FeatureCollection<Point, Record<string, unknown>>;
 	initialViewState: IceReportsMapCanvasViewport;
 	maxBounds: [[number, number], [number, number]];
+	heightPx?: number;
 	onBboxChange: (bbox: {
 		minLon: number;
 		minLat: number;
 		maxLon: number;
 		maxLat: number;
 	}) => void;
-	onSelectReport: (selection: {
-		sourceId: string;
-		sourceCreatedAt?: string;
+	onSelectReport: (selection: IceReportSelection) => void;
+	onSelectCluster?: (cluster: {
+		kind: "cluster";
+		clusterId: number;
+		clusterCount: number;
+		items: IceReportCard[];
+		isLoading: boolean;
 	}) => void;
+	highlightedSourceId?: string | null;
 }
 
 async function getClusterLeaves(
@@ -116,14 +117,15 @@ function IceReportsMapCanvas({
 	geojson,
 	initialViewState,
 	maxBounds,
+	heightPx = 520,
 	onBboxChange,
 	onSelectReport,
+	onSelectCluster,
+	highlightedSourceId = null,
 }: IceReportsMapCanvasProps) {
 	const mapRef = useRef<MapRef | null>(null);
 	const [hoverInfo, setHoverInfo] = useState<HoverInfo | null>(null);
-	const [clusterPopup, setClusterPopup] = useState<ClusterPopupState | null>(
-		null,
-	);
+	const highlightLayerId = useId();
 	const isApplyingThemeRef = useRef(false);
 	const lastAppliedThemeKeyRef = useRef<string | null>(null);
 
@@ -204,53 +206,69 @@ function IceReportsMapCanvas({
 		setHoverInfo(null);
 	}, []);
 
-	const toClusterPopupItems = useCallback(
-		(features: MapGeoJSONFeature[]): IceReportsClusterPopupItem[] => {
-			return (
-				features
-					.map((feature) => {
-						const props = featureProps(feature);
-						const sourceId = String(props.sourceId ?? "");
-						if (!sourceId.length) return null;
-						const sourceCreatedAtRaw = String(props.sourceCreatedAt ?? "");
-						const sourceCreatedAt = sourceCreatedAtRaw.length
-							? sourceCreatedAtRaw
-							: undefined;
+	const toClusterCards = useCallback((features: MapGeoJSONFeature[]) => {
+		function toStringOrNull(value: unknown): string | null {
+			if (typeof value !== "string") return null;
+			const trimmed = value.trim();
+			return trimmed.length ? trimmed : null;
+		}
 
-						const title =
-							(props.locationDescription as string | undefined) ??
-							(props.reportType as string | undefined) ??
-							"ICE report";
-						const subtitle =
-							typeof props.reportType === "string" && props.reportType.length
-								? props.reportType
-								: undefined;
+		function toIntegerOrNull(value: unknown): number | null {
+			const num = toNumberOrNull(value);
+			if (num === null) return null;
+			const rounded = Math.trunc(num);
+			return Number.isFinite(rounded) ? rounded : null;
+		}
 
-						return {
-							sourceId,
-							...(sourceCreatedAt ? { sourceCreatedAt } : {}),
-							title,
-							...(subtitle ? { subtitle } : {}),
-						} satisfies IceReportsClusterPopupItem;
-					})
-					.filter((item): item is IceReportsClusterPopupItem => item !== null)
-					// Prefer newest first when we have timestamps.
-					.sort((a, b) => {
-						const aMs = a.sourceCreatedAt
+		return (
+			features
+				.map((feature) => {
+					const props = featureProps(feature);
+					const sourceId = String(props.sourceId ?? "").trim();
+					if (!sourceId.length) return null;
+
+					const sourceCreatedAt =
+						toStringOrNull(props.sourceCreatedAt) ?? undefined;
+
+					return {
+						sourceId,
+						...(sourceCreatedAt ? { sourceCreatedAt } : {}),
+						reportType: toStringOrNull(props.reportType),
+						locationDescription: toStringOrNull(props.locationDescription),
+						incidentTime: toStringOrNull(props.incidentTime),
+						approved:
+							typeof props.approved === "boolean" ? props.approved : null,
+						archived:
+							typeof props.archived === "boolean" ? props.archived : null,
+						lon: toNumberOrNull(props.lon),
+						lat: toNumberOrNull(props.lat),
+						mediaCount: toIntegerOrNull(props.mediaCount),
+						commentCount: toIntegerOrNull(props.commentCount),
+						smallThumbnail: toStringOrNull(props.smallThumbnail),
+						numOfficials: toIntegerOrNull(props.numOfficials),
+						numVehicles: toIntegerOrNull(props.numVehicles),
+					} satisfies IceReportCard;
+				})
+				.filter((item): item is IceReportCard => item !== null)
+				// Prefer newest first when we have timestamps.
+				.sort((a, b) => {
+					const aMs = a.incidentTime
+						? Date.parse(a.incidentTime)
+						: a.sourceCreatedAt
 							? Date.parse(a.sourceCreatedAt)
 							: Number.NaN;
-						const bMs = b.sourceCreatedAt
+					const bMs = b.incidentTime
+						? Date.parse(b.incidentTime)
+						: b.sourceCreatedAt
 							? Date.parse(b.sourceCreatedAt)
 							: Number.NaN;
-						if (Number.isFinite(aMs) && Number.isFinite(bMs)) return bMs - aMs;
-						if (Number.isFinite(bMs)) return 1;
-						if (Number.isFinite(aMs)) return -1;
-						return a.sourceId.localeCompare(b.sourceId);
-					})
-			);
-		},
-		[],
-	);
+					if (Number.isFinite(aMs) && Number.isFinite(bMs)) return bMs - aMs;
+					if (Number.isFinite(bMs)) return 1;
+					if (Number.isFinite(aMs)) return -1;
+					return a.sourceId.localeCompare(b.sourceId);
+				})
+		);
+	}, []);
 
 	const handleClick = useCallback(
 		async (event: MapLayerMouseEvent) => {
@@ -259,7 +277,6 @@ function IceReportsMapCanvas({
 
 			const feature = (event.features?.[0] ?? null) as MapGeoJSONFeature | null;
 			if (!feature) {
-				setClusterPopup(null);
 				return;
 			}
 
@@ -276,7 +293,8 @@ function IceReportsMapCanvas({
 				)
 					return;
 
-				setClusterPopup({
+				onSelectCluster?.({
+					kind: "cluster",
 					clusterId,
 					clusterCount,
 					items: [],
@@ -286,18 +304,22 @@ function IceReportsMapCanvas({
 				try {
 					const limit = clamp(clusterCount, 1, 75);
 					const leaves = await getClusterLeaves(source, clusterId, limit);
-					const items = toClusterPopupItems(leaves);
-					setClusterPopup((current) =>
-						current && current.clusterId === clusterId
-							? { ...current, items, isLoading: false }
-							: current,
-					);
+					const items = toClusterCards(leaves);
+					onSelectCluster?.({
+						kind: "cluster",
+						clusterId,
+						clusterCount,
+						items,
+						isLoading: false,
+					});
 				} catch {
-					setClusterPopup((current) =>
-						current && current.clusterId === clusterId
-							? { ...current, items: [], isLoading: false }
-							: current,
-					);
+					onSelectCluster?.({
+						kind: "cluster",
+						clusterId,
+						clusterCount,
+						items: [],
+						isLoading: false,
+					});
 				}
 				return;
 			}
@@ -306,13 +328,12 @@ function IceReportsMapCanvas({
 			const sourceCreatedAt = String(props.sourceCreatedAt ?? "");
 			if (!sourceId.length) return;
 
-			setClusterPopup(null);
 			onSelectReport({
 				sourceId,
 				sourceCreatedAt: sourceCreatedAt.length ? sourceCreatedAt : undefined,
 			});
 		},
-		[onSelectReport, toClusterPopupItems],
+		[onSelectCluster, onSelectReport, toClusterCards],
 	);
 
 	const maybeApplyTheme = useCallback(() => {
@@ -358,102 +379,94 @@ function IceReportsMapCanvas({
 	}, []);
 
 	return (
-		<div className="w-full">
-			<div className="mb-2 flex items-center justify-between gap-3">
-				<p className="text-sm text-foreground">
-					Hover for preview, click for details, click clusters for the list
-				</p>
+		<div className="ice-reports-map relative overflow-hidden rounded-2xl bg-background">
+			<MapLibre
+				ref={mapRef}
+				// Dark base so "land" is reliably dark. We still recolor water via `applyTheme()`.
+				mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+				initialViewState={initialViewState}
+				maxBounds={maxBounds}
+				minZoom={2.8}
+				maxZoom={13}
+				style={{ width: "100%", height: heightPx }}
+				interactiveLayerIds={interactiveLayerIds}
+				onDragEnd={handleDragEnd}
+				onLoad={handleLoad}
+				onStyleData={handleStyleData}
+				onMouseMove={handleMouseMove}
+				onMouseLeave={handleMouseLeave}
+				onClick={handleClick}
+			>
+				<NavigationControl position="top-right" />
+
+				<IceReportsMapSource
+					id={MAP_SOURCE_ID}
+					type="geojson"
+					data={geojson}
+					cluster
+					clusterRadius={CLUSTER_RADIUS_PX}
+					clusterMaxZoom={CLUSTER_MAX_ZOOM}
+				>
+					<IceReportsMapLayer {...clusterLayer} />
+					<IceReportsMapLayer {...clusterCountLayer} />
+					<IceReportsMapLayer {...unclusteredPointLayer} />
+					{highlightedSourceId ? (
+						<IceReportsMapLayer
+							id={`ice-reports-highlight-${highlightLayerId.replace(/:/g, "")}`}
+							type="circle"
+							source={MAP_SOURCE_ID}
+							filter={[
+								"all",
+								["!", ["has", "point_count"]],
+								["==", ["get", "sourceId"], highlightedSourceId],
+							]}
+							paint={{
+								"circle-color": "#ffffff",
+								"circle-radius": 9,
+								"circle-opacity": 0.8,
+								"circle-stroke-width": 3,
+								"circle-stroke-color": "#dc2626",
+							}}
+						/>
+					) : null}
+				</IceReportsMapSource>
+			</MapLibre>
+
+			{/* Permanent attribution overlays */}
+			<div className="pointer-events-none absolute bottom-2 left-2 z-10">
+				<div className="pointer-events-auto rounded-md bg-background/80 px-2 py-1 text-[11px] text-muted-foreground ring-1 ring-border/60 supports-backdrop-filter:backdrop-blur-sm">
+					powered by{" "}
+					<a
+						className="underline underline-offset-3 hover:text-foreground"
+						href="https://iceout.org"
+						target="_blank"
+						rel="noreferrer"
+					>
+						iceout.org
+					</a>
+				</div>
 			</div>
 
-			<div className="ice-reports-map relative overflow-hidden rounded-2xl bg-background">
-				<MapLibre
-					ref={mapRef}
-					// Dark base so "land" is reliably dark. We still recolor water via `applyTheme()`.
-					mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-					initialViewState={initialViewState}
-					maxBounds={maxBounds}
-					minZoom={2.8}
-					maxZoom={13}
-					style={{ width: "100%", height: 520 }}
-					interactiveLayerIds={interactiveLayerIds}
-					onDragEnd={handleDragEnd}
-					onLoad={handleLoad}
-					onStyleData={handleStyleData}
-					onMouseMove={handleMouseMove}
-					onMouseLeave={handleMouseLeave}
-					onClick={handleClick}
+			{/* Hover tooltip */}
+			{hoverInfo && (
+				<div
+					className="pointer-events-none absolute z-20"
+					style={{
+						left: hoverInfo.x,
+						top: hoverInfo.y,
+						transform: "translate(10px, 10px)",
+					}}
 				>
-					<NavigationControl position="top-right" />
-
-					<IceReportsMapSource
-						id={MAP_SOURCE_ID}
-						type="geojson"
-						data={geojson}
-						cluster
-						clusterRadius={CLUSTER_RADIUS_PX}
-						clusterMaxZoom={CLUSTER_MAX_ZOOM}
-					>
-						<IceReportsMapLayer {...clusterLayer} />
-						<IceReportsMapLayer {...clusterCountLayer} />
-						<IceReportsMapLayer {...unclusteredPointLayer} />
-					</IceReportsMapSource>
-				</MapLibre>
-
-				{/* Permanent attribution overlays */}
-				<div className="pointer-events-none absolute bottom-2 left-2 z-10">
-					<div className="pointer-events-auto rounded-md bg-background/80 px-2 py-1 text-[11px] text-muted-foreground ring-1 ring-border/60 supports-backdrop-filter:backdrop-blur-sm">
-						powered by{" "}
-						<a
-							className="underline underline-offset-3 hover:text-foreground"
-							href="https://iceout.org"
-							target="_blank"
-							rel="noreferrer"
-						>
-							iceout.org
-						</a>
+					<div className="max-w-[260px] rounded-lg bg-background/90 px-3 py-2 text-xs ring-1 ring-border/60 supports-backdrop-filter:backdrop-blur-sm">
+						<div className="font-medium text-foreground">{hoverInfo.title}</div>
+						{hoverInfo.subtitle ? (
+							<div className="mt-0.5 text-muted-foreground">
+								{hoverInfo.subtitle}
+							</div>
+						) : null}
 					</div>
 				</div>
-
-				{/* Cluster click popup (portal so it won't be clipped by overflow-hidden). */}
-				{clusterPopup && (
-					<IceReportsClusterPopup
-						clusterCount={clusterPopup.clusterCount}
-						items={clusterPopup.items}
-						isLoading={clusterPopup.isLoading}
-						onClose={() => setClusterPopup(null)}
-						onSelect={(item) => {
-							setClusterPopup(null);
-							onSelectReport({
-								sourceId: item.sourceId,
-								sourceCreatedAt: item.sourceCreatedAt,
-							});
-						}}
-					/>
-				)}
-
-				{/* Hover tooltip */}
-				{hoverInfo && (
-					<div
-						className="pointer-events-none absolute z-20"
-						style={{
-							left: hoverInfo.x,
-							top: hoverInfo.y,
-							transform: "translate(10px, 10px)",
-						}}
-					>
-						<div className="max-w-[260px] rounded-lg bg-background/90 px-3 py-2 text-xs ring-1 ring-border/60 supports-backdrop-filter:backdrop-blur-sm">
-							<div className="font-medium text-foreground">
-								{hoverInfo.title}
-							</div>
-							{hoverInfo.subtitle ? (
-								<div className="mt-0.5 text-muted-foreground">
-									{hoverInfo.subtitle}
-								</div>
-							) : null}
-						</div>
-					</div>
-				)}
-			</div>
+			)}
 		</div>
 	);
 }

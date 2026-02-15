@@ -3,11 +3,18 @@ import type { FeatureCollection, Point } from "geojson";
 import { motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
 import SectionDivider from "@/components/ui/section-divider";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getTrpcClient } from "@/integrations/trpc/client";
 import { defaultViewport, fadeUp, staggerContainer } from "@/lib/motion";
-import type { IceReportSelection } from "./IceReportDialog";
-import IceReportDialog from "./IceReportDialog";
+import IceReportsExplorerDialog, {
+	type IceReportsExplorerClusterCrumb,
+	type IceReportsExplorerCrumb,
+	type IceReportsExplorerReportCrumb,
+} from "./IceReportsExplorerDialog";
 import IceReportsMapCanvas from "./IceReportsMapCanvas";
+import IceReportsResultsPanel from "./IceReportsResultsPanel";
+import type { IceReportCard, IceReportSelection } from "./iceReportsCards";
+import { toIceReportCards } from "./iceReportsCards";
 import type { IceReportBboxInput } from "./iceReportsMapUtils";
 import { toNumberOrNull } from "./iceReportsMapUtils";
 
@@ -16,6 +23,14 @@ interface IceReportMapPoint {
 	sourceCreatedAt: string;
 	reportType: string | null;
 	locationDescription: string | null;
+	incidentTime: string | null;
+	approved: boolean | null;
+	archived: boolean | null;
+	mediaCount: number | null;
+	commentCount: number | null;
+	smallThumbnail: string | null;
+	numOfficials: number | null;
+	numVehicles: number | null;
 	lon: number | null;
 	lat: number | null;
 }
@@ -42,28 +57,34 @@ const QUERY_LOOKBACK_HOURS = 24 * 14;
 const QUERY_LIMIT = 500;
 
 function toMapPoints(value: unknown): IceReportMapPoint[] {
-	if (!Array.isArray(value)) return [];
-
-	return value
-		.map((report) => {
-			if (!report || typeof report !== "object") return null;
-			const record = report as Record<string, unknown>;
-			const lon = toNumberOrNull(record.lon);
-			const lat = toNumberOrNull(record.lat);
+	const cards = toIceReportCards(value);
+	return cards
+		.map((card): IceReportMapPoint | null => {
+			const lon = toNumberOrNull(card.lon);
+			const lat = toNumberOrNull(card.lat);
 			if (lon === null || lat === null) return null;
+			if (!card.sourceCreatedAt) return null;
 
-			return {
-				sourceId: String(record.sourceId ?? ""),
-				sourceCreatedAt: String(record.sourceCreatedAt ?? ""),
-				reportType: (record.reportType ?? null) as string | null,
-				locationDescription: (record.locationDescription ?? null) as
-					| string
-					| null,
+			const point: IceReportMapPoint = {
+				sourceId: card.sourceId,
+				sourceCreatedAt: card.sourceCreatedAt,
+				reportType: card.reportType,
+				locationDescription: card.locationDescription,
+				incidentTime: card.incidentTime,
+				approved: card.approved,
+				archived: card.archived,
+				mediaCount: card.mediaCount,
+				commentCount: card.commentCount,
+				smallThumbnail: card.smallThumbnail,
+				numOfficials: card.numOfficials,
+				numVehicles: card.numVehicles,
 				lon,
 				lat,
-			} satisfies IceReportMapPoint;
+			};
+
+			return point;
 		})
-		.filter((item) => item !== null);
+		.filter((item): item is IceReportMapPoint => item !== null);
 }
 
 function toGeoJson(
@@ -82,6 +103,16 @@ function toGeoJson(
 				sourceCreatedAt: point.sourceCreatedAt,
 				reportType: point.reportType,
 				locationDescription: point.locationDescription,
+				incidentTime: point.incidentTime,
+				approved: point.approved,
+				archived: point.archived,
+				mediaCount: point.mediaCount,
+				commentCount: point.commentCount,
+				smallThumbnail: point.smallThumbnail,
+				numOfficials: point.numOfficials,
+				numVehicles: point.numVehicles,
+				lon: point.lon,
+				lat: point.lat,
 			},
 		})),
 	};
@@ -90,11 +121,17 @@ function toGeoJson(
 export default function IceReportsMapSection() {
 	const trpcClient = useMemo(() => getTrpcClient(), []);
 	const isClient = typeof window !== "undefined";
+	const isMobile = useIsMobile();
 	const [bboxInput, setBboxInput] = useState<IceReportBboxInput>(USA_BBOX);
-	const [selection, setSelection] = useState<IceReportSelection | null>(null);
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [explorerStack, setExplorerStack] = useState<IceReportsExplorerCrumb[]>(
+		[],
+	);
+	const [highlightedSourceId, setHighlightedSourceId] = useState<string | null>(
+		null,
+	);
+	const [filteredCards, setFilteredCards] = useState<IceReportCard[]>([]);
 
-	const { data } = useQuery({
+	const { data, isLoading } = useQuery({
 		queryKey: ["ice-reports", "map", bboxInput],
 		queryFn: () =>
 			trpcClient.iceReports.bbox.query({
@@ -108,7 +145,12 @@ export default function IceReportsMapSection() {
 	});
 
 	const points = useMemo(() => toMapPoints(data), [data]);
-	const geojson = useMemo(() => toGeoJson(points), [points]);
+	const geojson = useMemo(
+		() =>
+			toGeoJson(filteredCards.length > 0 ? toMapPoints(filteredCards) : points),
+		[points, filteredCards],
+	);
+	const cards = useMemo(() => toIceReportCards(data), [data]);
 
 	const handleBboxChange = useCallback((nextBbox: IceReportBboxInput) => {
 		setBboxInput((currentBbox) =>
@@ -123,11 +165,32 @@ export default function IceReportsMapSection() {
 
 	const handleSelectReport = useCallback(
 		(nextSelection: IceReportSelection) => {
-			setSelection(nextSelection);
-			setIsDialogOpen(true);
+			setExplorerStack([
+				{
+					kind: "report",
+					selection: nextSelection,
+				} satisfies IceReportsExplorerReportCrumb,
+			]);
 		},
 		[],
 	);
+
+	const handleSelectCluster = useCallback(
+		(cluster: IceReportsExplorerClusterCrumb) => {
+			setExplorerStack((current) => {
+				// If the active stack is already rooted on this cluster, just update it
+				// (this allows the "loading -> loaded" update without navigation reset).
+				const root = current[0];
+				if (root?.kind === "cluster" && root.clusterId === cluster.clusterId) {
+					return [cluster, ...current.slice(1)];
+				}
+				return [cluster];
+			});
+		},
+		[],
+	);
+
+	const mapHeightPx = isMobile ? 420 : 560;
 
 	return (
 		<motion.section
@@ -135,31 +198,52 @@ export default function IceReportsMapSection() {
 			initial="hidden"
 			whileInView="visible"
 			viewport={defaultViewport}
-			className="w-full max-w-[960px] px-4 pt-8 pb-2"
+			className="w-full max-w-[1200px] px-4 pt-8 pb-2"
 		>
 			<motion.div variants={fadeUp} className="mb-4">
-				<SectionDivider label="ICE Reports Map (USA)" />
+				<SectionDivider label="Icy Conditions Across the US" />
 			</motion.div>
 
-			<motion.div variants={fadeUp} className="w-full">
+			<motion.div variants={fadeUp} className="mb-6">
+				<IceReportsResultsPanel
+					cards={cards}
+					isLoading={isLoading}
+					onSelect={handleSelectReport}
+					onFiltersChange={setFilteredCards}
+					showFiltersOnly
+				/>
+			</motion.div>
+
+			<motion.div
+				variants={fadeUp}
+				className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_420px]"
+			>
 				<IceReportsMapCanvas
 					geojson={geojson}
 					initialViewState={USA_VIEWPORT}
 					maxBounds={USA_MAX_BOUNDS}
 					onBboxChange={handleBboxChange}
 					onSelectReport={handleSelectReport}
+					onSelectCluster={(cluster) => handleSelectCluster(cluster)}
+					highlightedSourceId={highlightedSourceId}
+					heightPx={mapHeightPx}
+				/>
+
+				<IceReportsResultsPanel
+					cards={cards}
+					isLoading={isLoading}
+					heightPx={mapHeightPx}
+					onSelect={(selection) => handleSelectReport(selection)}
+					onHoverChange={(selection) =>
+						setHighlightedSourceId(selection?.sourceId ?? null)
+					}
+					showListOnly
 				/>
 			</motion.div>
 
-			<IceReportDialog
-				open={isDialogOpen}
-				selection={selection}
-				onOpenChange={(open) => {
-					setIsDialogOpen(open);
-					if (!open) {
-						setSelection(null);
-					}
-				}}
+			<IceReportsExplorerDialog
+				stack={explorerStack}
+				onStackChange={(next) => setExplorerStack(next)}
 			/>
 		</motion.section>
 	);
