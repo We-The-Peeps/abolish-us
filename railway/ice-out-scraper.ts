@@ -43,8 +43,6 @@ interface ScrapeRow {
   vehicleReports: unknown[];
   lon: number | null;
   lat: number | null;
-  rawSummary: Record<string, unknown>;
-  rawDetail: Record<string, unknown>;
 }
 
 interface ScrapeBatchResult {
@@ -453,9 +451,17 @@ async function scrapeRowsFromPage(
 
       function pickNumber(...values: unknown[]): number | null {
         for (const value of values) {
-          const numeric = Number(value);
-          if (Number.isFinite(numeric)) {
-            return numeric;
+          if (typeof value === "number") {
+            if (Number.isFinite(value)) return value;
+            continue;
+          }
+
+          // Avoid `Number(null) === 0` / `Number("") === 0` footguns.
+          if (typeof value === "string") {
+            const trimmed = value.trim();
+            if (!trimmed.length) continue;
+            const numeric = Number(trimmed);
+            if (Number.isFinite(numeric)) return numeric;
           }
         }
 
@@ -538,6 +544,7 @@ async function scrapeRowsFromPage(
         const candidate = normalizeSummaryCandidate(item);
         if (!candidate) return false;
         if (!isWithinLookback(candidate.sourceCreatedAt)) return false;
+        if (candidate.summary.approved === false) return false;
 
         const existing = summaryById.get(candidate.sourceId);
         if (
@@ -554,12 +561,33 @@ async function scrapeRowsFromPage(
       async function fetchJson(
         url: string
       ): Promise<{ ok: boolean; status: number; json: unknown; text: string }> {
+        const cookieParts = document.cookie
+          .split(";")
+          .map((entry) => entry.trim());
+        const csrftokenEntry = cookieParts.find((entry) =>
+          entry.startsWith("csrftoken=")
+        );
+        const csrftoken = csrftokenEntry
+          ? decodeURIComponent(csrftokenEntry.split("=")[1] ?? "")
+          : "";
+
+        const headers: Record<string, string> = {
+          accept: "application/json, text/plain, application/*",
+          "accept-language": "en-US,en;q=0.9",
+          // iceout.org varies payload shape by api-version; keep consistent with report-feed.
+          "x-api-version": "1.6",
+          "x-locale": "en",
+        };
+
+        if (csrftoken) {
+          headers["x-csrftoken"] = csrftoken;
+        }
+
         const response = await fetch(url, {
           method: "GET",
           credentials: "include",
           headers: {
-            accept: "application/json, text/plain, application/*",
-            "accept-language": "en-US,en;q=0.9",
+            ...headers,
           },
         });
 
@@ -639,6 +667,7 @@ async function scrapeRowsFromPage(
         const encodedId = encodeURIComponent(reportId);
         const reportUrls = [
           `/api/reports/${encodedId}/`,
+          `/api/reports/${encodedId}`,
           `/api/reports/${encodedId}/?archived=False`,
           `/api/reports/${encodedId}/?archived=False&incident_time__gte=${encodeURIComponent(
             lookbackStartIso
@@ -648,14 +677,36 @@ async function scrapeRowsFromPage(
         for (const reportUrl of reportUrls) {
           const payload = await fetchJson(reportUrl);
           if (!payload.ok) continue;
-          if (
-            !payload.json ||
-            typeof payload.json !== "object" ||
-            Array.isArray(payload.json)
-          )
-            continue;
+          if (!payload.json || typeof payload.json !== "object") continue;
 
-          return payload.json as Record<string, unknown>;
+          // Some endpoints may wrap the report; unwrap common envelope keys.
+          if (Array.isArray(payload.json)) {
+            const first = payload.json[0];
+            if (first && typeof first === "object" && !Array.isArray(first)) {
+              return first as Record<string, unknown>;
+            }
+            continue;
+          }
+
+          const record = payload.json as Record<string, unknown>;
+          const hasId = record.id !== undefined || record._id !== undefined;
+          if (hasId) return record;
+
+          const envelopeCandidates = [
+            record.report,
+            record.result,
+            record.results,
+            record.item,
+            record.data,
+          ];
+          for (const candidate of envelopeCandidates) {
+            if (!candidate || typeof candidate !== "object") continue;
+            if (Array.isArray(candidate)) continue;
+            const candidateRecord = candidate as Record<string, unknown>;
+            const candidateHasId =
+              candidateRecord.id !== undefined || candidateRecord._id !== undefined;
+            if (candidateHasId) return candidateRecord;
+          }
         }
 
         return null;
@@ -672,22 +723,34 @@ async function scrapeRowsFromPage(
         const activityTags = pickArray(
           primary.activity_tag_enums,
           primary.activity_tags_enums,
+          primary.activityTagEnums,
+          primary.activityTags,
           summary.activity_tag_enums,
-          summary.activity_tags_enums
+          summary.activity_tags_enums,
+          summary.activityTagEnums,
+          summary.activityTags
         );
         const enforcementTags = pickArray(
           primary.enforcement_tag_enums,
           primary.enforcement_tags_enums,
+          primary.enforcementTagEnums,
+          primary.enforcementTags,
           summary.enforcement_tag_enums,
-          summary.enforcement_tags_enums
+          summary.enforcement_tags_enums,
+          summary.enforcementTagEnums,
+          summary.enforcementTags
         );
         const categoryTagsFromArray = pickArray(
           primary.category_enums,
-          summary.category_enums
+          primary.categoryEnums,
+          summary.category_enums,
+          summary.categoryEnums
         );
         const categoryEnum = pickNumber(
           primary.category_enum,
           primary.display_category_enum,
+          primary.categoryEnum,
+          primary.displayCategoryEnum,
           summary.category_enum,
           summary.display_category_enum
         );
@@ -701,8 +764,24 @@ async function scrapeRowsFromPage(
         const comments = pickArray(primary.comments, summary.comments);
         const vehicleReports = pickArray(
           primary.vehicle_reports,
-          summary.vehicle_reports
+          primary.vehicleReports,
+          summary.vehicle_reports,
+          summary.vehicleReports
         );
+        const derivedVehicleCount =
+          vehicleReports.length > 0 ? vehicleReports.length : null;
+        const numVehicles =
+          pickNumber(
+            primary.num_vehicles,
+            primary.number_of_vehicles,
+            primary.numVehicles,
+            primary.numberOfVehicles,
+            summary.num_vehicles,
+            summary.number_of_vehicles,
+            summary.numVehicles,
+            summary.numberOfVehicles
+          ) ??
+          derivedVehicleCount;
 
         return {
           sourceId,
@@ -712,41 +791,68 @@ async function scrapeRowsFromPage(
             toIso(primary.createdAt) ??
             sourceCreatedAt,
           incidentTime:
-            toIso(primary.incident_time) ?? toIso(summary.incident_time),
+            toIso(primary.incident_time) ??
+            toIso(primary.incidentTime) ??
+            toIso(summary.incident_time) ??
+            toIso(summary.incidentTime),
           approved: pickBoolean(primary.approved, summary.approved),
           archived: pickBoolean(primary.archived, summary.archived),
           reportType: pickText(
             primary.report_type,
             primary.type,
+            primary.reportType,
             summary.report_type,
-            summary.type
+            summary.type,
+            summary.reportType
           ),
           locationDescription: pickText(
             primary.location_description,
             primary.address,
+            primary.locationDescription,
             summary.location_description,
-            summary.address
+            summary.address,
+            summary.locationDescription
           ),
           activityDescription: pickText(
             primary.activity_description,
+            primary.activityDescription,
             summary.activity_description
           ),
           clothingDescription: pickText(
             primary.clothing_description,
+            primary.clothingDescription,
             summary.clothing_description
           ),
-          sourceLink: pickText(primary.source_link, summary.source_link),
-          submittedBy: pickText(primary.submitted_by, summary.submitted_by),
+          sourceLink: pickText(
+            primary.source_link,
+            primary.sourceLink,
+            summary.source_link,
+            summary.sourceLink
+          ),
+          submittedBy: pickText(
+            primary.submitted_by,
+            primary.submittedBy,
+            summary.submitted_by,
+            summary.submittedBy
+          ),
           numOfficials: pickNumber(
             primary.num_officials,
-            summary.num_officials
+            primary.number_of_officials,
+            primary.numOfficials,
+            primary.numberOfOfficials,
+            summary.num_officials,
+            summary.number_of_officials,
+            summary.numOfficials,
+            summary.numberOfOfficials
           ),
-          numVehicles: pickNumber(primary.num_vehicles, summary.num_vehicles),
+          numVehicles,
           mediaCount: media.length,
           commentCount: comments.length,
           smallThumbnail: pickText(
             primary.small_thumbnail,
-            summary.small_thumbnail
+            primary.smallThumbnail,
+            summary.small_thumbnail,
+            summary.smallThumbnail
           ),
           activityTags,
           enforcementTags,
@@ -756,8 +862,6 @@ async function scrapeRowsFromPage(
           vehicleReports,
           lon,
           lat,
-          rawSummary: summary,
-          rawDetail: detail ?? summary,
         };
       }
 
@@ -926,11 +1030,6 @@ insert into public.ice_report_details (
   activity_tags,
   enforcement_tags,
   category_tags,
-  media,
-  comments,
-  vehicle_reports,
-  raw_summary,
-  raw_detail,
   ingested_at,
   updated_at
 ) values (
@@ -948,11 +1047,6 @@ insert into public.ice_report_details (
   $12::jsonb,
   $13::jsonb,
   $14::jsonb,
-  $15::jsonb,
-  $16::jsonb,
-  $17::jsonb,
-  $18::jsonb,
-  $19::jsonb,
   now(),
   now()
 )
@@ -970,12 +1064,54 @@ do update set
   activity_tags = excluded.activity_tags,
   enforcement_tags = excluded.enforcement_tags,
   category_tags = excluded.category_tags,
-  media = excluded.media,
-  comments = excluded.comments,
-  vehicle_reports = excluded.vehicle_reports,
-  raw_summary = excluded.raw_summary,
-  raw_detail = excluded.raw_detail,
   updated_at = now()
+`;
+
+const DELETE_REPORT_MEDIA_SQL = `
+delete from public.ice_report_media
+where source_id = $1 and source_created_at = $2::timestamptz
+`;
+
+const INSERT_REPORT_MEDIA_SQL = `
+insert into public.ice_report_media (
+  media_id, source_id, source_created_at, media_type, image_url, video_url,
+  size_bytes, small_thumbnail, medium_thumbnail, idx, media_created_at
+) values (
+  $1, $2, $3::timestamptz, $4, $5, $6, $7, $8, $9, $10, $11::timestamptz
+)
+on conflict (media_id) do update set
+  media_type = excluded.media_type,
+  image_url = excluded.image_url,
+  video_url = excluded.video_url,
+  size_bytes = excluded.size_bytes,
+  small_thumbnail = excluded.small_thumbnail,
+  medium_thumbnail = excluded.medium_thumbnail,
+  idx = excluded.idx,
+  media_created_at = excluded.media_created_at
+`;
+
+const DELETE_REPORT_VEHICLES_SQL = `
+delete from public.ice_report_vehicles
+where source_id = $1 and source_created_at = $2::timestamptz
+`;
+
+const INSERT_REPORT_VEHICLE_SQL = `
+insert into public.ice_report_vehicles (
+  vehicle_id, source_id, source_created_at, plate_number
+) values ($1, $2, $3::timestamptz, $4)
+on conflict (vehicle_id) do update set
+  plate_number = excluded.plate_number
+`;
+
+const DELETE_REPORT_COMMENTS_SQL = `
+delete from public.ice_report_comments
+where source_id = $1 and source_created_at = $2::timestamptz
+`;
+
+const INSERT_REPORT_COMMENT_SQL = `
+insert into public.ice_report_comments (
+  source_id, source_created_at, body, comment_created_at
+) values ($1, $2::timestamptz, $3, $4::timestamptz)
 `;
 
 async function persistRows(rows: ScrapeRow[]): Promise<PersistResult> {
@@ -988,11 +1124,15 @@ async function persistRows(rows: ScrapeRow[]): Promise<PersistResult> {
 
   const client = await pool.connect();
   let geoRows = 0;
+  let upsertedRows = 0;
 
   try {
     await client.query("begin");
 
     for (const row of rows) {
+      // Skip unapproved reports entirely.
+      if (row.approved === false) continue;
+
       if (Number.isFinite(row.lon) && Number.isFinite(row.lat)) {
         geoRows += 1;
       }
@@ -1025,17 +1165,100 @@ async function persistRows(rows: ScrapeRow[]): Promise<PersistResult> {
         JSON.stringify(row.activityTags),
         JSON.stringify(row.enforcementTags),
         JSON.stringify(row.categoryTags),
-        JSON.stringify(row.media),
-        JSON.stringify(row.comments),
-        JSON.stringify(row.vehicleReports),
-        JSON.stringify(row.rawSummary),
-        JSON.stringify(row.rawDetail),
       ]);
+
+      // -- Child tables: delete + reinsert for a clean sync each cycle. --
+
+      // Media
+      await client.query(DELETE_REPORT_MEDIA_SQL, [
+        row.sourceId,
+        row.sourceCreatedAt,
+      ]);
+      for (const mediaItem of row.media) {
+        if (
+          !mediaItem ||
+          typeof mediaItem !== "object" ||
+          Array.isArray(mediaItem)
+        )
+          continue;
+        const m = mediaItem as Record<string, unknown>;
+        const mediaId = m.id;
+        if (mediaId === undefined || mediaId === null) continue;
+        await client.query(INSERT_REPORT_MEDIA_SQL, [
+          Number(mediaId),
+          row.sourceId,
+          row.sourceCreatedAt,
+          typeof m.media_type === "string" ? m.media_type : null,
+          typeof m.image === "string" ? m.image : null,
+          typeof m.video === "string" ? m.video : null,
+          typeof m.size === "number" ? m.size : null,
+          typeof m.small_thumbnail === "string" ? m.small_thumbnail : null,
+          typeof m.medium_thumbnail === "string" ? m.medium_thumbnail : null,
+          typeof m.idx === "number" ? m.idx : 0,
+          typeof m.created_at === "string" ? m.created_at : null,
+        ]);
+      }
+
+      // Vehicle reports
+      await client.query(DELETE_REPORT_VEHICLES_SQL, [
+        row.sourceId,
+        row.sourceCreatedAt,
+      ]);
+      for (const vehicleItem of row.vehicleReports) {
+        if (
+          !vehicleItem ||
+          typeof vehicleItem !== "object" ||
+          Array.isArray(vehicleItem)
+        )
+          continue;
+        const v = vehicleItem as Record<string, unknown>;
+        const vehicleId = v.id;
+        if (vehicleId === undefined || vehicleId === null) continue;
+        await client.query(INSERT_REPORT_VEHICLE_SQL, [
+          Number(vehicleId),
+          row.sourceId,
+          row.sourceCreatedAt,
+          typeof v.plate_number === "string" ? v.plate_number : null,
+        ]);
+      }
+
+      // Comments
+      await client.query(DELETE_REPORT_COMMENTS_SQL, [
+        row.sourceId,
+        row.sourceCreatedAt,
+      ]);
+      for (const commentItem of row.comments) {
+        if (
+          !commentItem ||
+          typeof commentItem !== "object" ||
+          Array.isArray(commentItem)
+        )
+          continue;
+        const c = commentItem as Record<string, unknown>;
+        const body =
+          typeof c.body === "string"
+            ? c.body
+            : typeof c.text === "string"
+            ? c.text
+            : typeof c.comment === "string"
+            ? c.comment
+            : null;
+        const commentCreatedAt =
+          typeof c.created_at === "string" ? c.created_at : null;
+        await client.query(INSERT_REPORT_COMMENT_SQL, [
+          row.sourceId,
+          row.sourceCreatedAt,
+          body,
+          commentCreatedAt,
+        ]);
+      }
+
+      upsertedRows += 1;
     }
 
     await client.query("commit");
     return {
-      upsertedRows: rows.length,
+      upsertedRows,
       geoRows,
     };
   } catch (error) {

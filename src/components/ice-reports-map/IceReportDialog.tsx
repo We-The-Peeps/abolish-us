@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
 	Dialog,
@@ -114,12 +115,65 @@ export default function IceReportDialog({
 								{reportDetail.locationDescription ?? "Unknown"}
 							</span>
 						</div>
+						<div className="grid grid-cols-2 gap-2 text-sm">
+							<div>
+								<span className="text-muted-foreground">Officials:</span>{" "}
+								<span className="text-foreground">
+									{reportDetail.numOfficials ?? "Unknown"}
+								</span>
+							</div>
+							<div>
+								<span className="text-muted-foreground">Vehicles:</span>{" "}
+								<span className="text-foreground">
+									{reportDetail.numVehicles ?? "Unknown"}
+								</span>
+							</div>
+						</div>
 						{reportDetail.activityDescription ? (
 							<div className="text-sm">
 								<span className="text-muted-foreground">Activity:</span>{" "}
 								<span className="text-foreground">
 									{reportDetail.activityDescription}
 								</span>
+							</div>
+						) : null}
+						{Array.isArray(reportDetail.activityTagLabels) &&
+						reportDetail.activityTagLabels.length ? (
+							<div className="text-sm">
+								<div className="text-muted-foreground">Activity reported:</div>
+								<div className="mt-1 flex flex-wrap gap-1.5">
+									{reportDetail.activityTagLabels.map((label) => (
+										<Badge key={label} variant="secondary">
+											{label}
+										</Badge>
+									))}
+								</div>
+							</div>
+						) : null}
+						{Array.isArray(reportDetail.enforcementTagLabels) &&
+						reportDetail.enforcementTagLabels.length ? (
+							<div className="text-sm">
+								<div className="text-muted-foreground">Agency tags:</div>
+								<div className="mt-1 flex flex-wrap gap-1.5">
+									{reportDetail.enforcementTagLabels.map((label) => (
+										<Badge key={label} variant="outline">
+											{label}
+										</Badge>
+									))}
+								</div>
+							</div>
+						) : null}
+						{Array.isArray(reportDetail.licensePlates) &&
+						reportDetail.licensePlates.length ? (
+							<div className="text-sm">
+								<div className="text-muted-foreground">License plates:</div>
+								<div className="mt-1 flex flex-wrap gap-1.5">
+									{reportDetail.licensePlates.map((plate) => (
+										<Badge key={plate} variant="outline">
+											{plate}
+										</Badge>
+									))}
+								</div>
 							</div>
 						) : null}
 						{reportDetail.sourceLink ? (

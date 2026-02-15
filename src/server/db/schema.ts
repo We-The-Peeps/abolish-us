@@ -1,4 +1,6 @@
 import {
+	bigint,
+	bigserial,
 	boolean,
 	doublePrecision,
 	foreignKey,
@@ -10,10 +12,6 @@ import {
 	text,
 	timestamp,
 } from "drizzle-orm/pg-core";
-
-export interface IceReportRawPayload {
-	[key: string]: unknown;
-}
 
 export interface IceReportArrayPayload extends Array<unknown> {}
 
@@ -89,13 +87,6 @@ export const iceReportDetails = pgTable(
 		categoryTags: jsonb("category_tags")
 			.$type<IceReportArrayPayload>()
 			.notNull(),
-		media: jsonb("media").$type<IceReportArrayPayload>().notNull(),
-		comments: jsonb("comments").$type<IceReportArrayPayload>().notNull(),
-		vehicleReports: jsonb("vehicle_reports")
-			.$type<IceReportArrayPayload>()
-			.notNull(),
-		rawSummary: jsonb("raw_summary").$type<IceReportRawPayload>().notNull(),
-		rawDetail: jsonb("raw_detail").$type<IceReportRawPayload>().notNull(),
 	},
 	(table) => [
 		primaryKey({
@@ -111,6 +102,102 @@ export const iceReportDetails = pgTable(
 		index("ice_report_details_media_count_idx").on(
 			table.mediaCount,
 			table.commentCount,
+		),
+	],
+);
+
+export const iceReportMedia = pgTable(
+	"ice_report_media",
+	{
+		mediaId: bigint("media_id", { mode: "number" }).notNull(),
+		sourceId: text("source_id").notNull(),
+		sourceCreatedAt: timestamp("source_created_at", {
+			withTimezone: true,
+		}).notNull(),
+		mediaType: text("media_type"),
+		imageUrl: text("image_url"),
+		videoUrl: text("video_url"),
+		sizeBytes: integer("size_bytes"),
+		smallThumbnail: text("small_thumbnail"),
+		mediumThumbnail: text("medium_thumbnail"),
+		idx: integer("idx").notNull().default(0),
+		mediaCreatedAt: timestamp("media_created_at", { withTimezone: true }),
+	},
+	(table) => [
+		primaryKey({
+			name: "ice_report_media_pk",
+			columns: [table.mediaId],
+		}),
+		foreignKey({
+			name: "ice_report_media_detail_fk",
+			columns: [table.sourceId, table.sourceCreatedAt],
+			foreignColumns: [
+				iceReportDetails.sourceId,
+				iceReportDetails.sourceCreatedAt,
+			],
+		}).onDelete("cascade"),
+		index("ice_report_media_report_idx").on(
+			table.sourceId,
+			table.sourceCreatedAt,
+		),
+		index("ice_report_media_type_idx").on(table.mediaType),
+	],
+);
+
+export const iceReportVehicles = pgTable(
+	"ice_report_vehicles",
+	{
+		vehicleId: bigint("vehicle_id", { mode: "number" }).notNull(),
+		sourceId: text("source_id").notNull(),
+		sourceCreatedAt: timestamp("source_created_at", {
+			withTimezone: true,
+		}).notNull(),
+		plateNumber: text("plate_number"),
+	},
+	(table) => [
+		primaryKey({
+			name: "ice_report_vehicles_pk",
+			columns: [table.vehicleId],
+		}),
+		foreignKey({
+			name: "ice_report_vehicles_detail_fk",
+			columns: [table.sourceId, table.sourceCreatedAt],
+			foreignColumns: [
+				iceReportDetails.sourceId,
+				iceReportDetails.sourceCreatedAt,
+			],
+		}).onDelete("cascade"),
+		index("ice_report_vehicles_report_idx").on(
+			table.sourceId,
+			table.sourceCreatedAt,
+		),
+		index("ice_report_vehicles_plate_idx").on(table.plateNumber),
+	],
+);
+
+export const iceReportComments = pgTable(
+	"ice_report_comments",
+	{
+		commentId: bigserial("comment_id", { mode: "number" }).primaryKey(),
+		sourceId: text("source_id").notNull(),
+		sourceCreatedAt: timestamp("source_created_at", {
+			withTimezone: true,
+		}).notNull(),
+		body: text("body"),
+		commentCreatedAt: timestamp("comment_created_at", { withTimezone: true }),
+	},
+	(table) => [
+		foreignKey({
+			name: "ice_report_comments_detail_fk",
+			columns: [table.sourceId, table.sourceCreatedAt],
+			foreignColumns: [
+				iceReportDetails.sourceId,
+				iceReportDetails.sourceCreatedAt,
+			],
+		}).onDelete("cascade"),
+		index("ice_report_comments_report_idx").on(
+			table.sourceId,
+			table.sourceCreatedAt,
 		),
 	],
 );

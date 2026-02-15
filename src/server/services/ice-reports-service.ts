@@ -2,7 +2,18 @@ import { and, desc, eq, gte, lte } from "drizzle-orm";
 import { withJsonCache } from "@/server/cache/dragonfly";
 import { getServerConfig } from "@/server/config";
 import { db } from "@/server/db/client";
-import { iceReportDetails, iceReports } from "@/server/db/schema";
+import {
+	iceReportComments,
+	iceReportDetails,
+	iceReportMedia,
+	iceReports,
+	iceReportVehicles,
+} from "@/server/db/schema";
+import {
+	extractIceoutPlateNumbers,
+	resolveIceoutActivityTagLabels,
+	resolveIceoutEnforcementTagLabels,
+} from "@/server/domain/iceout/iceout-enums";
 
 interface IceReportRecord {
 	sourceId: string;
@@ -39,11 +50,29 @@ interface IceReportDetailRecord {
 	activityTags: unknown[];
 	enforcementTags: unknown[];
 	categoryTags: unknown[];
-	media: unknown[];
-	comments: unknown[];
-	vehicleReports: unknown[];
-	rawSummary: Record<string, unknown>;
-	rawDetail: Record<string, unknown>;
+	media: Array<{
+		mediaId: number;
+		mediaType: string | null;
+		imageUrl: string | null;
+		videoUrl: string | null;
+		sizeBytes: number | null;
+		smallThumbnail: string | null;
+		mediumThumbnail: string | null;
+		idx: number;
+		mediaCreatedAt: string | null;
+	}>;
+	comments: Array<{
+		commentId: number;
+		body: string | null;
+		commentCreatedAt: string | null;
+	}>;
+	vehicleReports: Array<{
+		vehicleId: number;
+		plateNumber: string | null;
+	}>;
+	licensePlates: string[];
+	activityTagLabels: string[];
+	enforcementTagLabels: string[];
 }
 
 interface IceReportsRecentInput {
@@ -89,18 +118,6 @@ function toLookbackDate(lookbackHours: number): Date {
 
 function toCacheKey(scope: string, input: Record<string, unknown>): string {
 	return `${CACHE_NAMESPACE}:${scope}:${JSON.stringify(input)}`;
-}
-
-function toArray(value: unknown): unknown[] {
-	return Array.isArray(value) ? value : [];
-}
-
-function toRecord(value: unknown): Record<string, unknown> {
-	if (!value || typeof value !== "object" || Array.isArray(value)) {
-		return {};
-	}
-
-	return value as Record<string, unknown>;
 }
 
 function normalizeRows(
@@ -282,11 +299,6 @@ export async function getIceReportDetail(
 					activityTags: iceReportDetails.activityTags,
 					enforcementTags: iceReportDetails.enforcementTags,
 					categoryTags: iceReportDetails.categoryTags,
-					media: iceReportDetails.media,
-					comments: iceReportDetails.comments,
-					vehicleReports: iceReportDetails.vehicleReports,
-					rawSummary: iceReportDetails.rawSummary,
-					rawDetail: iceReportDetails.rawDetail,
 				})
 				.from(iceReports)
 				.innerJoin(
@@ -303,6 +315,85 @@ export async function getIceReportDetail(
 			if (!rows.length) return null;
 
 			const row = rows[0];
+			const activityTags = Array.isArray(row.activityTags)
+				? row.activityTags
+				: [];
+			const enforcementTags = Array.isArray(row.enforcementTags)
+				? row.enforcementTags
+				: [];
+
+			// Fetch normalized child relationships (stored in separate tables now).
+			const [mediaRows, vehicleRows, commentRows] = await Promise.all([
+				db
+					.select({
+						mediaId: iceReportMedia.mediaId,
+						mediaType: iceReportMedia.mediaType,
+						imageUrl: iceReportMedia.imageUrl,
+						videoUrl: iceReportMedia.videoUrl,
+						sizeBytes: iceReportMedia.sizeBytes,
+						smallThumbnail: iceReportMedia.smallThumbnail,
+						mediumThumbnail: iceReportMedia.mediumThumbnail,
+						idx: iceReportMedia.idx,
+						mediaCreatedAt: iceReportMedia.mediaCreatedAt,
+					})
+					.from(iceReportMedia)
+					.where(
+						and(
+							eq(iceReportMedia.sourceId, row.sourceId),
+							eq(iceReportMedia.sourceCreatedAt, row.sourceCreatedAt),
+						),
+					)
+					.orderBy(iceReportMedia.idx),
+				db
+					.select({
+						vehicleId: iceReportVehicles.vehicleId,
+						plateNumber: iceReportVehicles.plateNumber,
+					})
+					.from(iceReportVehicles)
+					.where(
+						and(
+							eq(iceReportVehicles.sourceId, row.sourceId),
+							eq(iceReportVehicles.sourceCreatedAt, row.sourceCreatedAt),
+						),
+					),
+				db
+					.select({
+						commentId: iceReportComments.commentId,
+						body: iceReportComments.body,
+						commentCreatedAt: iceReportComments.commentCreatedAt,
+					})
+					.from(iceReportComments)
+					.where(
+						and(
+							eq(iceReportComments.sourceId, row.sourceId),
+							eq(iceReportComments.sourceCreatedAt, row.sourceCreatedAt),
+						),
+					)
+					.orderBy(desc(iceReportComments.commentCreatedAt)),
+			]);
+
+			const vehicleReports = vehicleRows.map((vehicle) => ({
+				vehicleId: vehicle.vehicleId ?? 0,
+				plateNumber: vehicle.plateNumber ?? null,
+			}));
+			const licensePlates = extractIceoutPlateNumbers(
+				vehicleReports as unknown[],
+			);
+			const activityTagLabels = resolveIceoutActivityTagLabels(activityTags);
+			const enforcementTagLabels =
+				resolveIceoutEnforcementTagLabels(enforcementTags);
+
+			// Older ingests could have `numVehicles=0` because the scraper previously coerced
+			// null-ish values via `Number(null) => 0`. Prefer a derived count if present.
+			const numVehiclesDerived =
+				typeof row.numVehicles === "number" && row.numVehicles > 0
+					? row.numVehicles
+					: licensePlates.length > 0
+						? licensePlates.length
+						: vehicleReports.length > 0
+							? vehicleReports.length
+							: row.numVehicles;
+
 			return {
 				sourceId: row.sourceId,
 				sourceCreatedAt: toIsoString(row.sourceCreatedAt),
@@ -318,20 +409,39 @@ export async function getIceReportDetail(
 				sourceLink: row.sourceLink,
 				submittedBy: row.submittedBy,
 				numOfficials: row.numOfficials,
-				numVehicles: row.numVehicles,
+				numVehicles: numVehiclesDerived ?? null,
 				mediaCount: row.mediaCount,
 				commentCount: row.commentCount,
 				smallThumbnail: row.smallThumbnail,
 				// TODO: Add canonical enum-to-label dictionaries and return resolved labels here
 				// while still preserving raw enum IDs for filtering/analytics.
-				activityTags: toArray(row.activityTags),
-				enforcementTags: toArray(row.enforcementTags),
-				categoryTags: toArray(row.categoryTags),
-				media: toArray(row.media),
-				comments: toArray(row.comments),
-				vehicleReports: toArray(row.vehicleReports),
-				rawSummary: toRecord(row.rawSummary),
-				rawDetail: toRecord(row.rawDetail),
+				activityTags,
+				enforcementTags,
+				categoryTags: Array.isArray(row.categoryTags) ? row.categoryTags : [],
+				media: mediaRows.map((media) => ({
+					mediaId: media.mediaId ?? 0,
+					mediaType: media.mediaType ?? null,
+					imageUrl: media.imageUrl ?? null,
+					videoUrl: media.videoUrl ?? null,
+					sizeBytes: media.sizeBytes ?? null,
+					smallThumbnail: media.smallThumbnail ?? null,
+					mediumThumbnail: media.mediumThumbnail ?? null,
+					idx: media.idx ?? 0,
+					mediaCreatedAt: media.mediaCreatedAt
+						? media.mediaCreatedAt.toISOString()
+						: null,
+				})),
+				comments: commentRows.map((comment) => ({
+					commentId: comment.commentId ?? 0,
+					body: comment.body ?? null,
+					commentCreatedAt: comment.commentCreatedAt
+						? comment.commentCreatedAt.toISOString()
+						: null,
+				})),
+				vehicleReports,
+				licensePlates,
+				activityTagLabels,
+				enforcementTagLabels,
 			};
 		},
 	);
