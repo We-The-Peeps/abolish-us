@@ -230,7 +230,7 @@ export default function IceReportsResultsPanel({
 	const listContent = (
 		<ScrollArea
 			className={cn(
-				"w-full rounded-2xl border bg-white shadow-sm overflow-hidden",
+				"w-full rounded-2xl border bg-card shadow-sm overflow-hidden",
 				className,
 			)}
 			style={{ height: heightPx }}

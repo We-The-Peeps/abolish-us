@@ -6,6 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { ThemeProvider } from "next-themes";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -123,39 +124,41 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootDocument({ children }: { children: React.ReactNode }) {
 	const isMobile = useIsMobile();
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
 			<body>
-				{isMobile ? (
-					children
-				) : (
-					<OverlayScrollbarsComponent
-						defer
-						data-app-scroll-root
-						className="h-dvh w-full"
-						options={{
-							overflow: { x: "hidden", y: "scroll" },
-							scrollbars: { autoHide: "leave", autoHideDelay: 500 },
+				<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+					{isMobile ? (
+						children
+					) : (
+						<OverlayScrollbarsComponent
+							defer
+							data-app-scroll-root
+							className="h-dvh w-full"
+							options={{
+								overflow: { x: "hidden", y: "scroll" },
+								scrollbars: { autoHide: "leave", autoHideDelay: 500 },
+							}}
+						>
+							{children}
+						</OverlayScrollbarsComponent>
+					)}
+					<TanStackDevtools
+						config={{
+							position: "bottom-right",
 						}}
-					>
-						{children}
-					</OverlayScrollbarsComponent>
-				)}
-				<TanStackDevtools
-					config={{
-						position: "bottom-right",
-					}}
-					plugins={[
-						{
-							name: "Tanstack Router",
-							render: <TanStackRouterDevtoolsPanel />,
-						},
-						TanStackQueryDevtools,
-					]}
-				/>
-				<Scripts />
+						plugins={[
+							{
+								name: "Tanstack Router",
+								render: <TanStackRouterDevtoolsPanel />,
+							},
+							TanStackQueryDevtools,
+						]}
+					/>
+					<Scripts />
+				</ThemeProvider>
 			</body>
 		</html>
 	);

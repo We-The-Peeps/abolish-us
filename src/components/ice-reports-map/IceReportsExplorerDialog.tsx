@@ -97,8 +97,8 @@ export default function IceReportsExplorerDialog({
 				if (!nextOpen) onStackChange([]);
 			}}
 		>
-			<DialogContent className="max-h-[calc(100vh-2rem)] w-[min(calc(100%-2rem),980px)] overflow-hidden p-0 sm:max-w-none">
-				<DialogHeader className="gap-2 border-b px-4 py-3">
+			<DialogContent className="max-h-[calc(100vh-2rem)] w-[min(calc(100%-2rem),980px)] overflow-hidden p-0 sm:max-w-none bg-background">
+				<DialogHeader className="gap-2 border-b px-4 py-3 bg-background">
 					<DialogTitle className="text-base">ICE reports</DialogTitle>
 
 					<Breadcrumb className="w-full">
@@ -165,7 +165,7 @@ export default function IceReportsExplorerDialog({
 						</div>
 					) : null}
 
-					<div className="h-[500px] w-full">
+					<div className="h-[500px] w-full bg-background">
 						<ScrollArea className="h-full">
 							<div
 								className={cn(

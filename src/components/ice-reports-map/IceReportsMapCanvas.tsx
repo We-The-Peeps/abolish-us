@@ -342,9 +342,12 @@ function IceReportsMapCanvas({
 		if (isApplyingThemeRef.current) return;
 
 		// MapLibre's style-spec color parser does not accept modern syntaxes (oklch/lab).
-		// Use MapLibre-safe hex colors.
-		const water = "#f4f1ea";
-		const land = "#111111";
+		// Use MapLibre-safe hex colors based on current theme.
+		const isDark = document.documentElement.classList.contains("dark");
+		// Land should be light, water should match page background.
+		// Page background: light=#f4f1ea, dark=oklch(0.16 0.007 60) -> approx #272727
+		const water = isDark ? "#111111" : "#f4f1ea";
+		const land = isDark ? "#f4f1ea" : "#111111";
 
 		const style = map.getStyle();
 		const themeKey = `${style?.sprite ?? ""}|${style?.glyphs ?? ""}|${water}|${land}`;

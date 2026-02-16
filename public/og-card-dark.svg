@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">ABOLISH US</title>
+  <desc id="desc">Abolish Us social card - Dark Mode</desc>
+  <rect width="1200" height="630matches" fill="#272727" />
+  <g>
+    <rect x="85" y="243" width="98" height="98" rx="2" ry="2" fill="#ececec" />
+    <text
+      x="210"
+      y="307"
+      text-anchor="start"
+      dominant-baseline="middle"
+      fill="#ececec"
+      font-size="132"
+      letter-spacing="4"
+      font-weight="700"
+      font-family="'Playfair Display Variable', 'Source Serif 4 Variable', Georgia, serif"
+    >
+      ABOLISH US
+    </text>
+  </g>
+</svg>

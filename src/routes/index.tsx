@@ -8,6 +8,7 @@ import RebuildShipSection from "@/components/home/RebuildShipSection";
 import TraditionalChangeSection from "@/components/home/TraditionalChangeSection";
 import WhyIsChangeSlowDivider from "@/components/home/WhyIsChangeSlowDivider";
 import IceReportsMapSection from "@/components/ice-reports-map/IceReportsMapSection";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import SectionBreak from "@/components/ui/section-break";
 import IceDetailSection from "@/components/wealth/IceDetailSection";
 import IceHero from "@/components/wealth/IceHero";
@@ -24,6 +25,9 @@ function HomePage() {
 
 	return (
 		<div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+			<div className="absolute top-4 right-4 z-50">
+				<ThemeToggle />
+			</div>
 			<main className="flex flex-1 flex-col items-center">
 				{/* Hero + Case Files */}
 				<section className="flex w-full max-w-[960px] flex-col items-center justify-center px-4 pt-32 pb-8 text-center lg:px-0">
