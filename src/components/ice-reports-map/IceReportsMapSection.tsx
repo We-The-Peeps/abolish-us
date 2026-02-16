@@ -1,11 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import type { FeatureCollection, Point } from "geojson";
-import { motion } from "motion/react";
+import type { FeatureCollection, Geometry, Point } from "geojson";
+import { ListIcon, MapIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import SectionDivider from "@/components/ui/section-divider";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getTrpcClient } from "@/integrations/trpc/client";
 import { defaultViewport, fadeUp, staggerContainer } from "@/lib/motion";
+import { cn } from "@/lib/utils";
+import usStatesData from "../../../public/us-states.json";
 import IceReportsExplorerDialog, {
 	type IceReportsExplorerClusterCrumb,
 	type IceReportsExplorerCrumb,
@@ -17,6 +22,19 @@ import type { IceReportCard, IceReportSelection } from "./iceReportsCards";
 import { toIceReportCards } from "./iceReportsCards";
 import type { IceReportBboxInput } from "./iceReportsMapUtils";
 import { toNumberOrNull } from "./iceReportsMapUtils";
+import WikiAgentsResultsPanel from "./WikiAgentsResultsPanel";
+
+interface WikiAgent {
+	id: number;
+	wikiName: string;
+	fullName: string | null;
+	agency: string | null;
+	role: string | null;
+	fieldOffice: string | null;
+	state: string | null;
+	status: string | null;
+	verificationStatus: string | null;
+}
 
 interface IceReportMapPoint {
 	sourceId: string;
@@ -130,6 +148,27 @@ export default function IceReportsMapSection() {
 		null,
 	);
 	const [filteredCards, setFilteredCards] = useState<IceReportCard[]>([]);
+	const [filteredAgents, setFilteredAgents] = useState<WikiAgent[]>([]);
+	const [activeTab, setActiveTab] = useState("reports");
+	const [mobileView, setMobileView] = useState<"map" | "list">("map");
+
+	// Shared filter/sort state for reports
+	const [reportsSearch, setReportsSearch] = useState("");
+	const [reportsSort, setReportsSort] = useState<
+		"Newest" | "Most media" | "Most comments"
+	>("Newest");
+	const [reportsOnlyMedia, setReportsOnlyMedia] = useState(false);
+	const [reportsOnlyVehicles, setReportsOnlyVehicles] = useState(false);
+	const [reportsOnlyOfficials, setReportsOnlyOfficials] = useState(false);
+
+	// Shared filter/sort state for agents
+	const [agentsSearch, setAgentsSearch] = useState("");
+	const [agentsSort, setAgentsSort] = useState<"Name" | "Agency" | "State">(
+		"Name",
+	);
+
+	const isReports = activeTab === "reports";
+	const isAgents = activeTab === "agents";
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["ice-reports", "map", bboxInput],
@@ -144,12 +183,55 @@ export default function IceReportsMapSection() {
 		enabled: isClient,
 	});
 
+	const { data: agentsData, isLoading: isLoadingAgents } = useQuery({
+		queryKey: ["wiki-agents", "list"],
+		queryFn: () => trpcClient.wikiAgents.list.query(),
+		staleTime: 60_000,
+		enabled: isClient && isAgents,
+	});
+
 	const points = useMemo(() => toMapPoints(data), [data]);
 	const geojson = useMemo(
 		() =>
 			toGeoJson(filteredCards.length > 0 ? toMapPoints(filteredCards) : points),
 		[points, filteredCards],
 	);
+
+	const agentsGeojson = useMemo((): FeatureCollection<
+		Geometry,
+		Record<string, unknown>
+	> => {
+		const agentsToMap =
+			filteredAgents.length > 0
+				? filteredAgents
+				: (agentsData as WikiAgent[]) || [];
+		if (agentsToMap.length === 0)
+			return { type: "FeatureCollection", features: [] };
+
+		return {
+			type: "FeatureCollection",
+			features: (
+				usStatesData as FeatureCollection<Geometry, { name: string }>
+			).features.map((feature) => {
+				const stateName = feature.properties?.name;
+				const stateAgents = agentsToMap.filter((a) => a.state === stateName);
+				const totalCount = stateAgents.length;
+				const verifiedCount = stateAgents.filter(
+					(a) => a.verificationStatus === "Verified",
+				).length;
+
+				return {
+					...feature,
+					properties: {
+						...feature.properties,
+						agentCount: totalCount,
+						verifiedCount: verifiedCount,
+					},
+				};
+			}),
+		};
+	}, [agentsData, filteredAgents]);
+
 	const cards = useMemo(() => toIceReportCards(data), [data]);
 
 	const handleBboxChange = useCallback((nextBbox: IceReportBboxInput) => {
@@ -204,42 +286,167 @@ export default function IceReportsMapSection() {
 				<SectionDivider label="Icy Conditions Across the US" />
 			</motion.div>
 
-			<motion.div variants={fadeUp} className="mb-6">
-				<IceReportsResultsPanel
-					cards={cards}
-					isLoading={isLoading}
-					onSelect={handleSelectReport}
-					onFiltersChange={setFilteredCards}
-					showFiltersOnly
-				/>
-			</motion.div>
-
-			<motion.div
-				variants={fadeUp}
-				className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_420px]"
+			<Tabs
+				value={activeTab}
+				onValueChange={setActiveTab}
+				className="flex flex-col gap-6"
 			>
-				<IceReportsMapCanvas
-					geojson={geojson}
-					initialViewState={USA_VIEWPORT}
-					maxBounds={USA_MAX_BOUNDS}
-					onBboxChange={handleBboxChange}
-					onSelectReport={handleSelectReport}
-					onSelectCluster={(cluster) => handleSelectCluster(cluster)}
-					highlightedSourceId={highlightedSourceId}
-					heightPx={mapHeightPx}
-				/>
+				<motion.div variants={fadeUp} className="flex flex-col gap-4">
+					<div className="flex items-center justify-between">
+						<TabsList>
+							<TabsTrigger value="reports">Reports</TabsTrigger>
+							<TabsTrigger value="agents">Agents</TabsTrigger>
+						</TabsList>
 
-				<IceReportsResultsPanel
-					cards={cards}
-					isLoading={isLoading}
-					heightPx={mapHeightPx}
-					onSelect={(selection) => handleSelectReport(selection)}
-					onHoverChange={(selection) =>
-						setHighlightedSourceId(selection?.sourceId ?? null)
-					}
-					showListOnly
-				/>
-			</motion.div>
+						{isMobile && (
+							<div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+								<Button
+									variant={mobileView === "map" ? "default" : "ghost"}
+									size="sm"
+									className="h-7 px-2"
+									onClick={() => setMobileView("map")}
+								>
+									<MapIcon className="mr-1.5 size-3.5" />
+									Map
+								</Button>
+								<Button
+									variant={mobileView === "list" ? "default" : "ghost"}
+									size="sm"
+									className="h-7 px-2"
+									onClick={() => setMobileView("list")}
+								>
+									<ListIcon className="mr-1.5 size-3.5" />
+									List
+								</Button>
+							</div>
+						)}
+					</div>
+
+					<div className="w-full">
+						{isReports ? (
+							<IceReportsResultsPanel
+								cards={cards}
+								isLoading={isLoading}
+								onSelect={handleSelectReport}
+								onFiltersChange={setFilteredCards}
+								showFiltersOnly
+								className="mb-0"
+								search={reportsSearch}
+								onSearchChange={setReportsSearch}
+								sort={reportsSort}
+								onSortChange={setReportsSort}
+								onlyWithMedia={reportsOnlyMedia}
+								onOnlyWithMediaChange={setReportsOnlyMedia}
+								onlyWithVehicles={reportsOnlyVehicles}
+								onOnlyWithVehiclesChange={setReportsOnlyVehicles}
+								onlyWithOfficials={reportsOnlyOfficials}
+								onOnlyWithOfficialsChange={setReportsOnlyOfficials}
+							/>
+						) : (
+							<WikiAgentsResultsPanel
+								agents={(agentsData as WikiAgent[]) ?? []}
+								isLoading={isLoadingAgents}
+								onFiltersChange={setFilteredAgents}
+								showFiltersOnly
+								className="mb-0"
+								search={agentsSearch}
+								onSearchChange={setAgentsSearch}
+								sort={agentsSort}
+								onSortChange={setAgentsSort}
+							/>
+						)}
+					</div>
+				</motion.div>
+
+				<motion.div
+					variants={fadeUp}
+					className={cn(
+						"relative flex flex-col gap-4 w-full",
+						isReports ? "lg:flex-row" : "lg:flex-row-reverse",
+					)}
+				>
+					<motion.div
+						layout
+						className={cn(
+							"flex-1 min-w-0",
+							isMobile && mobileView !== "map" && "hidden",
+						)}
+						transition={{ type: "spring", stiffness: 300, damping: 30 }}
+					>
+						<IceReportsMapCanvas
+							geojson={isReports ? geojson : agentsGeojson}
+							mode={activeTab as "reports" | "agents"}
+							initialViewState={USA_VIEWPORT}
+							maxBounds={USA_MAX_BOUNDS}
+							onBboxChange={handleBboxChange}
+							onSelectReport={handleSelectReport}
+							onSelectCluster={(cluster) => handleSelectCluster(cluster)}
+							highlightedSourceId={highlightedSourceId}
+							heightPx={mapHeightPx}
+						/>
+					</motion.div>
+
+					<div
+						className={cn(
+							"lg:w-[420px] lg:flex-none",
+							isMobile && mobileView !== "list" && "hidden",
+						)}
+					>
+						<AnimatePresence mode="wait">
+							{isReports && (
+								<motion.div
+									key="reports-sidebar"
+									initial={{ opacity: 0, x: 20 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: 20 }}
+									transition={{ duration: 0.2 }}
+								>
+									<IceReportsResultsPanel
+										cards={cards}
+										isLoading={isLoading}
+										heightPx={mapHeightPx}
+										onSelect={(selection) => handleSelectReport(selection)}
+										onHoverChange={(selection) =>
+											setHighlightedSourceId(selection?.sourceId ?? null)
+										}
+										showListOnly
+										search={reportsSearch}
+										onSearchChange={setReportsSearch}
+										sort={reportsSort}
+										onSortChange={setReportsSort}
+										onlyWithMedia={reportsOnlyMedia}
+										onOnlyWithMediaChange={setReportsOnlyMedia}
+										onlyWithVehicles={reportsOnlyVehicles}
+										onOnlyWithVehiclesChange={setReportsOnlyVehicles}
+										onlyWithOfficials={reportsOnlyOfficials}
+										onOnlyWithOfficialsChange={setReportsOnlyOfficials}
+									/>
+								</motion.div>
+							)}
+							{isAgents && (
+								<motion.div
+									key="agents-sidebar"
+									initial={{ opacity: 0, x: -20 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: -20 }}
+									transition={{ duration: 0.2 }}
+								>
+									<WikiAgentsResultsPanel
+										agents={(agentsData as WikiAgent[]) ?? []}
+										isLoading={isLoadingAgents}
+										heightPx={mapHeightPx}
+										showListOnly
+										search={agentsSearch}
+										onSearchChange={setAgentsSearch}
+										sort={agentsSort}
+										onSortChange={setAgentsSort}
+									/>
+								</motion.div>
+							)}
+						</AnimatePresence>
+					</div>
+				</motion.div>
+			</Tabs>
 
 			<IceReportsExplorerDialog
 				stack={explorerStack}

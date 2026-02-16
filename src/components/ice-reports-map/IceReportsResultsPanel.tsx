@@ -1,8 +1,9 @@
 "use client";
 
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useDebounce } from "ahooks";
 import { SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -10,7 +11,6 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@/components/ui/input-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
@@ -48,6 +48,17 @@ export interface IceReportsResultsPanelProps {
 	showFiltersOnly?: boolean;
 	showListOnly?: boolean;
 	onFiltersChange?: (filtered: IceReportCard[]) => void;
+	// Optional external state control
+	search?: string;
+	onSearchChange?: (value: string) => void;
+	sort?: SortOption;
+	onSortChange?: (value: SortOption) => void;
+	onlyWithMedia?: boolean;
+	onOnlyWithMediaChange?: (value: boolean) => void;
+	onlyWithVehicles?: boolean;
+	onOnlyWithVehiclesChange?: (value: boolean) => void;
+	onlyWithOfficials?: boolean;
+	onOnlyWithOfficialsChange?: (value: boolean) => void;
 }
 
 export default function IceReportsResultsPanel({
@@ -60,14 +71,46 @@ export default function IceReportsResultsPanel({
 	showFiltersOnly = false,
 	showListOnly = false,
 	onFiltersChange,
+	search: externalSearch,
+	onSearchChange,
+	sort: externalSort,
+	onSortChange,
+	onlyWithMedia: externalOnlyWithMedia,
+	onOnlyWithMediaChange,
+	onlyWithVehicles: externalOnlyWithVehicles,
+	onOnlyWithVehiclesChange,
+	onlyWithOfficials: externalOnlyWithOfficials,
+	onOnlyWithOfficialsChange,
 }: IceReportsResultsPanelProps) {
-	const [search, setSearch] = useState("");
+	const [internalSearch, setInternalSearch] = useState("");
+	const search = externalSearch ?? internalSearch;
+	const setSearch = onSearchChange ?? setInternalSearch;
+
+	const [internalSort, setInternalSort] = useState<SortOption>("Newest");
+	const sort = externalSort ?? internalSort;
+	const setSort = onSortChange ?? setInternalSort;
+
+	const [internalOnlyWithMedia, setInternalOnlyWithMedia] = useState(false);
+	const onlyWithMedia = externalOnlyWithMedia ?? internalOnlyWithMedia;
+	const setOnlyWithMedia = onOnlyWithMediaChange ?? setInternalOnlyWithMedia;
+
+	const [internalOnlyWithVehicles, setInternalOnlyWithVehicles] =
+		useState(false);
+	const onlyWithVehicles = externalOnlyWithVehicles ?? internalOnlyWithVehicles;
+	const setOnlyWithVehicles =
+		onOnlyWithVehiclesChange ?? setInternalOnlyWithVehicles;
+
+	const [internalOnlyWithOfficials, setInternalOnlyWithOfficials] =
+		useState(false);
+	const onlyWithOfficials =
+		externalOnlyWithOfficials ?? internalOnlyWithOfficials;
+	const setOnlyWithOfficials =
+		onOnlyWithOfficialsChange ?? setInternalOnlyWithOfficials;
+
 	// ahooks `useDebounce` returns the debounced value (not a tuple).
 	const debouncedSearch = useDebounce(search, { wait: 150 });
-	const [sort, setSort] = useState<SortOption>("Newest");
-	const [onlyWithMedia, setOnlyWithMedia] = useState(false);
-	const [onlyWithVehicles, setOnlyWithVehicles] = useState(false);
-	const [onlyWithOfficials, setOnlyWithOfficials] = useState(false);
+
+	const parentRef = useRef<HTMLDivElement>(null);
 
 	const filtered = useMemo(() => {
 		const q = (debouncedSearch ?? "").trim().toLowerCase();
@@ -105,11 +148,9 @@ export default function IceReportsResultsPanel({
 			}
 
 			// Newest: prefer incidentTime, then sourceCreatedAt.
-			const aMs = toMs(a.incidentTime) || toMs(a.sourceCreatedAt);
-			const bMs = toMs(b.incidentTime) || toMs(b.sourceCreatedAt);
-			if (Number.isFinite(aMs) && Number.isFinite(bMs)) return bMs - aMs;
-			if (Number.isFinite(bMs)) return 1;
-			if (Number.isFinite(aMs)) return -1;
+			const aMs = toMs(a.incidentTime) || toMs(a.sourceCreatedAt) || 0;
+			const bMs = toMs(b.incidentTime) || toMs(b.sourceCreatedAt) || 0;
+			if (bMs !== aMs) return bMs - aMs;
 			return toSelectionKey(a).localeCompare(toSelectionKey(b));
 		});
 
@@ -122,6 +163,13 @@ export default function IceReportsResultsPanel({
 		onlyWithVehicles,
 		sort,
 	]);
+
+	const virtualizer = useVirtualizer({
+		count: filtered.length,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => 100,
+		overscan: 5,
+	});
 
 	useEffect(() => {
 		onFiltersChange?.(filtered);
@@ -177,7 +225,7 @@ export default function IceReportsResultsPanel({
 					value={sort}
 					onValueChange={(next) => setSort(next as SortOption)}
 				>
-					<SelectTrigger size="sm" className="w-[160px]">
+					<SelectTrigger className="w-[160px]">
 						<SelectValue placeholder="Sort" />
 					</SelectTrigger>
 					<SelectContent>
@@ -195,7 +243,7 @@ export default function IceReportsResultsPanel({
 					<Button
 						variant={onlyWithMedia ? "default" : "outline"}
 						size="sm"
-						onClick={() => setOnlyWithMedia((v) => !v)}
+						onClick={() => setOnlyWithMedia(!onlyWithMedia)}
 						className={cn(
 							onlyWithMedia && "bg-primary text-primary-foreground",
 						)}
@@ -205,7 +253,7 @@ export default function IceReportsResultsPanel({
 					<Button
 						variant={onlyWithVehicles ? "default" : "outline"}
 						size="sm"
-						onClick={() => setOnlyWithVehicles((v) => !v)}
+						onClick={() => setOnlyWithVehicles(!onlyWithVehicles)}
 						className={cn(
 							onlyWithVehicles && "bg-primary text-primary-foreground",
 						)}
@@ -215,7 +263,7 @@ export default function IceReportsResultsPanel({
 					<Button
 						variant={onlyWithOfficials ? "default" : "outline"}
 						size="sm"
-						onClick={() => setOnlyWithOfficials((v) => !v)}
+						onClick={() => setOnlyWithOfficials(!onlyWithOfficials)}
 						className={cn(
 							onlyWithOfficials && "bg-primary text-primary-foreground",
 						)}
@@ -228,29 +276,53 @@ export default function IceReportsResultsPanel({
 	);
 
 	const listContent = (
-		<ScrollArea
+		<div
 			className={cn(
-				"w-full rounded-2xl border bg-card shadow-sm overflow-hidden",
+				"w-full rounded-2xl border bg-card shadow-sm overflow-hidden flex flex-col",
 				className,
 			)}
 			style={{ height: heightPx }}
 		>
-			<div className="grid gap-2 p-2">
-				{filtered.map((card) => (
-					<IceReportsReportRow
-						key={toSelectionKey(card)}
-						card={card}
-						onClick={() => onSelect(card)}
-						onHoverChange={(next) => onHoverChange?.(next)}
-					/>
-				))}
-				{!isLoading && filtered.length === 0 ? (
-					<div className="px-1 py-10 text-center text-sm text-muted-foreground">
-						No reports match your filters.
-					</div>
-				) : null}
+			<div className="flex-1 overflow-auto" ref={parentRef}>
+				<div
+					style={{
+						height: `${virtualizer.getTotalSize()}px`,
+						width: "100%",
+						position: "relative",
+					}}
+				>
+					{virtualizer.getVirtualItems().map((virtualRow) => {
+						const card = filtered[virtualRow.index];
+						return (
+							<div
+								key={virtualRow.key}
+								data-index={virtualRow.index}
+								ref={virtualizer.measureElement}
+								style={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: "100%",
+									transform: `translateY(${virtualRow.start}px)`,
+									padding: "4px 8px",
+								}}
+							>
+								<IceReportsReportRow
+									card={card}
+									onClick={() => onSelect(card)}
+									onHoverChange={(next) => onHoverChange?.(next)}
+								/>
+							</div>
+						);
+					})}
+					{!isLoading && filtered.length === 0 ? (
+						<div className="px-1 py-10 text-center text-sm text-muted-foreground">
+							No reports match your filters.
+						</div>
+					) : null}
+				</div>
 			</div>
-		</ScrollArea>
+		</div>
 	);
 
 	if (showFiltersOnly) return filtersContent;

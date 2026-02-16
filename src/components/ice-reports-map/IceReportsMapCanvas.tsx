@@ -1,5 +1,5 @@
 import { useDebounceFn } from "ahooks";
-import type { FeatureCollection, Point } from "geojson";
+import type { FeatureCollection, Geometry, Point } from "geojson";
 import type {
 	GeoJSONSource,
 	MapGeoJSONFeature,
@@ -14,6 +14,9 @@ import MapLibre, {
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { IceReportCard, IceReportSelection } from "./iceReportsCards";
 import {
+	AGENTS_SOURCE_ID,
+	agentStateLabelLayer,
+	agentStateLayer,
 	CLUSTER_MAX_ZOOM,
 	CLUSTER_RADIUS_PX,
 	clusterCountLayer,
@@ -43,7 +46,8 @@ interface HoverInfo {
 }
 
 export interface IceReportsMapCanvasProps {
-	geojson: FeatureCollection<Point, Record<string, unknown>>;
+	geojson: FeatureCollection<Geometry, Record<string, unknown>>;
+	mode?: "reports" | "agents";
 	initialViewState: IceReportsMapCanvasViewport;
 	maxBounds: [[number, number], [number, number]];
 	heightPx?: number;
@@ -52,7 +56,8 @@ export interface IceReportsMapCanvasProps {
 		minLat: number;
 		maxLon: number;
 		maxLat: number;
-	}) => void;
+		// biome-ignore lint/suspicious/noExplicitAny: suppressed
+	}) => any;
 	onSelectReport: (selection: IceReportSelection) => void;
 	onSelectCluster?: (cluster: {
 		kind: "cluster";
@@ -118,6 +123,7 @@ function IceReportsMapCanvas({
 	initialViewState,
 	maxBounds,
 	heightPx = 520,
+	mode = "reports",
 	onBboxChange,
 	onSelectReport,
 	onSelectCluster,
@@ -128,6 +134,9 @@ function IceReportsMapCanvas({
 	const highlightLayerId = useId();
 	const isApplyingThemeRef = useRef(false);
 	const lastAppliedThemeKeyRef = useRef<string | null>(null);
+
+	const isReports = mode === "reports";
+	const isAgents = mode === "agents";
 
 	// Layers are imported from the official example; keep them stable.
 
@@ -155,50 +164,70 @@ function IceReportsMapCanvas({
 		debouncedUpdateBbox();
 	}, [debouncedUpdateBbox]);
 
-	const handleMouseMove = useCallback(async (event: MapLayerMouseEvent) => {
-		const map = mapRef.current?.getMap();
-		if (!map) return;
+	const handleMouseMove = useCallback(
+		async (event: MapLayerMouseEvent) => {
+			const map = mapRef.current?.getMap();
+			if (!map) return;
 
-		const feature = (event.features?.[0] ?? null) as MapGeoJSONFeature | null;
-		if (!feature) {
-			map.getCanvas().style.cursor = "";
-			setHoverInfo(null);
-			return;
-		}
+			const feature = (event.features?.[0] ?? null) as MapGeoJSONFeature | null;
+			if (!feature) {
+				map.getCanvas().style.cursor = "";
+				setHoverInfo(null);
+				return;
+			}
 
-		map.getCanvas().style.cursor = "pointer";
+			map.getCanvas().style.cursor = "pointer";
 
-		const props = featureProps(feature);
-		const isCluster =
-			typeof props.point_count === "number" ||
-			typeof props.point_count === "string";
+			const props = featureProps(feature);
 
-		if (isCluster) {
-			const clusterCount = Number(props.point_count);
+			if (isAgents) {
+				const stateName = props.name as string;
+				const totalCount = props.agentCount as number;
+				const verifiedCount = props.verifiedCount as number;
+				const unverifiedCount = totalCount - verifiedCount;
+
+				setHoverInfo({
+					x: event.point.x,
+					y: event.point.y,
+					kind: "point",
+					title: stateName,
+					subtitle: `${totalCount} agents (${verifiedCount} verified, ${unverifiedCount} unverified)`,
+				});
+				return;
+			}
+
+			const isCluster =
+				typeof props.point_count === "number" ||
+				typeof props.point_count === "string";
+
+			if (isCluster) {
+				const clusterCount = Number(props.point_count);
+
+				setHoverInfo({
+					x: event.point.x,
+					y: event.point.y,
+					kind: "cluster",
+					title: `${clusterCount} reports`,
+					subtitle: "Click for list",
+				});
+				return;
+			}
+
+			const title =
+				(props.locationDescription as string | undefined) ??
+				(props.reportType as string | undefined) ??
+				"ICE report";
 
 			setHoverInfo({
 				x: event.point.x,
 				y: event.point.y,
-				kind: "cluster",
-				title: `${clusterCount} reports`,
-				subtitle: "Click for list",
+				kind: "point",
+				title,
+				subtitle: "Click for details",
 			});
-			return;
-		}
-
-		const title =
-			(props.locationDescription as string | undefined) ??
-			(props.reportType as string | undefined) ??
-			"ICE report";
-
-		setHoverInfo({
-			x: event.point.x,
-			y: event.point.y,
-			kind: "point",
-			title,
-			subtitle: "Click for details",
-		});
-	}, []);
+		},
+		[isAgents],
+	);
 
 	const handleMouseLeave = useCallback(() => {
 		const map = mapRef.current?.getMap();
@@ -376,10 +405,15 @@ function IceReportsMapCanvas({
 	}, [maybeApplyTheme]);
 
 	const interactiveLayerIds = useMemo(() => {
-		return [clusterLayer.id, unclusteredPointLayer.id].filter(
-			(id): id is string => typeof id === "string" && id.length > 0,
-		);
-	}, []);
+		const ids: string[] = [];
+		if (isAgents) {
+			if (agentStateLayer.id) ids.push(agentStateLayer.id);
+		} else {
+			if (clusterLayer.id) ids.push(clusterLayer.id);
+			if (unclusteredPointLayer.id) ids.push(unclusteredPointLayer.id);
+		}
+		return ids;
+	}, [isAgents]);
 
 	return (
 		<div className="ice-reports-map relative overflow-hidden rounded-2xl bg-background">
@@ -402,37 +436,50 @@ function IceReportsMapCanvas({
 			>
 				<NavigationControl position="top-right" />
 
-				<IceReportsMapSource
-					id={MAP_SOURCE_ID}
-					type="geojson"
-					data={geojson}
-					cluster
-					clusterRadius={CLUSTER_RADIUS_PX}
-					clusterMaxZoom={CLUSTER_MAX_ZOOM}
-				>
-					<IceReportsMapLayer {...clusterLayer} />
-					<IceReportsMapLayer {...clusterCountLayer} />
-					<IceReportsMapLayer {...unclusteredPointLayer} />
-					{highlightedSourceId ? (
-						<IceReportsMapLayer
-							id={`ice-reports-highlight-${highlightLayerId.replace(/:/g, "")}`}
-							type="circle"
-							source={MAP_SOURCE_ID}
-							filter={[
-								"all",
-								["!", ["has", "point_count"]],
-								["==", ["get", "sourceId"], highlightedSourceId],
-							]}
-							paint={{
-								"circle-color": "#ffffff",
-								"circle-radius": 9,
-								"circle-opacity": 0.8,
-								"circle-stroke-width": 3,
-								"circle-stroke-color": "#dc2626",
-							}}
-						/>
-					) : null}
-				</IceReportsMapSource>
+				{isReports && (
+					<IceReportsMapSource
+						id={MAP_SOURCE_ID}
+						type="geojson"
+						data={geojson as FeatureCollection<Point>}
+						cluster
+						clusterRadius={CLUSTER_RADIUS_PX}
+						clusterMaxZoom={CLUSTER_MAX_ZOOM}
+					>
+						<IceReportsMapLayer {...clusterLayer} />
+						<IceReportsMapLayer {...clusterCountLayer} />
+						<IceReportsMapLayer {...unclusteredPointLayer} />
+						{highlightedSourceId ? (
+							<IceReportsMapLayer
+								id={`ice-reports-highlight-${highlightLayerId.replace(/:/g, "")}`}
+								type="circle"
+								source={MAP_SOURCE_ID}
+								filter={[
+									"all",
+									["!", ["has", "point_count"]],
+									["==", ["get", "sourceId"], highlightedSourceId],
+								]}
+								paint={{
+									"circle-color": "#ffffff",
+									"circle-radius": 9,
+									"circle-opacity": 0.8,
+									"circle-stroke-width": 3,
+									"circle-stroke-color": "#dc2626",
+								}}
+							/>
+						) : null}
+					</IceReportsMapSource>
+				)}
+
+				{isAgents && (
+					<IceReportsMapSource
+						id={AGENTS_SOURCE_ID}
+						type="geojson"
+						data={geojson}
+					>
+						<IceReportsMapLayer {...agentStateLayer} />
+						<IceReportsMapLayer {...agentStateLabelLayer} />
+					</IceReportsMapSource>
+				)}
 			</MapLibre>
 
 			{/* Permanent attribution overlays */}
@@ -441,11 +488,11 @@ function IceReportsMapCanvas({
 					powered by{" "}
 					<a
 						className="underline underline-offset-3 hover:text-foreground"
-						href="https://iceout.org"
+						href={isAgents ? "https://wiki.icelist.is/" : "https://iceout.org"}
 						target="_blank"
 						rel="noreferrer"
 					>
-						iceout.org
+						{isAgents ? "icelist.is" : "iceout.org"}
 					</a>
 				</div>
 			</div>

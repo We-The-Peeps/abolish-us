@@ -7,6 +7,7 @@ import {
 	index,
 	integer,
 	jsonb,
+	pgSchema,
 	pgTable,
 	primaryKey,
 	text,
@@ -14,6 +15,34 @@ import {
 } from "drizzle-orm/pg-core";
 
 export interface IceReportArrayPayload extends Array<unknown> {}
+
+export const wikiAgents = pgTable(
+	"wiki_agents",
+	{
+		id: integer("id").primaryKey().notNull(),
+		wikiName: text("wiki_name").unique().notNull(),
+		fullName: text("full_name"),
+		agency: text("agency"),
+		role: text("role"),
+		fieldOffice: text("field_office"),
+		state: text("state"),
+		status: text("status"),
+		verificationStatus: text("verification_status"),
+		externalLinks: jsonb("external_links").default("[]"),
+		notes: text("notes"),
+		rawInfobox: jsonb("raw_infobox"),
+		lastScrapedAt: timestamp("last_scraped_at", {
+			withTimezone: true,
+		}).defaultNow(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+	},
+	(table) => [
+		index("idx_wiki_agents_agency").on(table.agency),
+		index("idx_wiki_agents_state").on(table.state),
+		index("idx_wiki_agents_verification").on(table.verificationStatus),
+	],
+);
 
 export const iceReports = pgTable(
 	"ice_reports",
