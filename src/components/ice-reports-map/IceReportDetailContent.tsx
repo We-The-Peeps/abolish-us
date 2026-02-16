@@ -77,11 +77,11 @@ export default function IceReportDetailContent({
 	});
 
 	const mediaUrls = useMemo(() => {
-		if (!reportDetail?.mediaCount) return [];
-		return Array.from({ length: reportDetail.mediaCount }).map(
-			(_, i) => `https://iceout.org/api/v1/media/${selection.sourceId}/${i}`,
-		);
-	}, [reportDetail?.mediaCount, selection.sourceId]);
+		if (!reportDetail?.media) return [];
+		return reportDetail.media
+			.map((m) => m.imageUrl)
+			.filter((url): url is string => Boolean(url));
+	}, [reportDetail?.media]);
 
 	const imageStatuses = useImagePrecheck(mediaUrls);
 
@@ -248,7 +248,10 @@ export default function IceReportDetailContent({
 									</span>
 								</div>
 								<span className="mt-1 text-2xl font-black">
-									{reportDetail.numOfficials ?? "Unknown"}
+									{typeof reportDetail.numOfficials === "number" &&
+									reportDetail.numOfficials >= 0
+										? reportDetail.numOfficials
+										: "Unknown"}
 								</span>
 							</div>
 							<div className="flex flex-col rounded-2xl border p-4 transition-colors hover:bg-muted/30">
@@ -259,7 +262,10 @@ export default function IceReportDetailContent({
 									</span>
 								</div>
 								<span className="mt-1 text-2xl font-black">
-									{reportDetail.numVehicles ?? "Unknown"}
+									{typeof reportDetail.numVehicles === "number" &&
+									reportDetail.numVehicles >= 0
+										? reportDetail.numVehicles
+										: "Unknown"}
 								</span>
 							</div>
 						</div>
@@ -321,28 +327,57 @@ export default function IceReportDetailContent({
 								Comments & Discussions
 							</h3>
 							<Badge variant="outline" className="px-3 py-1 font-bold">
-								{reportDetail.commentCount || 0}
+								{reportDetail.comments.length || 0}
 							</Badge>
 						</div>
-						<div className="rounded-2xl border border-dashed p-10 text-center bg-muted/5">
-							<MessageSquareIcon className="mx-auto size-10 text-muted-foreground/20" />
-							<p className="mt-3 text-base text-muted-foreground">
-								{reportDetail.commentCount && reportDetail.commentCount > 0
-									? "View discussions on the full report page."
-									: "No comments yet on this report."}
-							</p>
-							{iceoutReportUrl && (
-								<a
-									href={iceoutReportUrl}
-									target="_blank"
-									rel="noreferrer"
-									className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
-								>
-									Join the conversation
-									<ExternalLinkIcon className="size-4" />
-								</a>
-							)}
-						</div>
+						{reportDetail.comments.length > 0 ? (
+							<div className="space-y-4">
+								{reportDetail.comments.map((comment) => (
+									<div
+										key={comment.commentId}
+										className="rounded-2xl border p-4 bg-muted/5"
+									>
+										<p className="text-sm leading-relaxed text-foreground/90">
+											{comment.body}
+										</p>
+										{comment.commentCreatedAt && (
+											<p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+												{new Date(comment.commentCreatedAt).toLocaleString()}
+											</p>
+										)}
+									</div>
+								))}
+								{iceoutReportUrl && (
+									<a
+										href={iceoutReportUrl}
+										target="_blank"
+										rel="noreferrer"
+										className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+									>
+										View all on Iceout.org
+										<ExternalLinkIcon className="size-4" />
+									</a>
+								)}
+							</div>
+						) : (
+							<div className="rounded-2xl border border-dashed p-10 text-center bg-muted/5">
+								<MessageSquareIcon className="mx-auto size-10 text-muted-foreground/20" />
+								<p className="mt-3 text-base text-muted-foreground">
+									No comments yet on this report.
+								</p>
+								{iceoutReportUrl && (
+									<a
+										href={iceoutReportUrl}
+										target="_blank"
+										rel="noreferrer"
+										className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline"
+									>
+										Join the conversation
+										<ExternalLinkIcon className="size-4" />
+									</a>
+								)}
+							</div>
+						)}
 					</div>
 
 					{/* Tags Section */}
