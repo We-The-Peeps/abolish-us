@@ -99,7 +99,7 @@ const subjectMeta: Record<string, SubjectMeta> = {
 		caseId: "DOJ-EF-0097",
 	},
 	tucker: {
-		name: "Carlson, Tucker S.",
+		name: "Chris, Tucker ",
 		position: "Media Personality",
 		caseId: "DOJ-EF-0098",
 	},
